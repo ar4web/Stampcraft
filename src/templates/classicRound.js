@@ -1,0 +1,45 @@
+const C = 310;
+
+export default {
+  id: "classicRound",
+  name: "Classic Round",
+  tags: ["round", "double border"],
+  build: () => [
+    { type: "circle", r: 250, cx: C, cy: C, strokeWidth: 8, stroke: "#000000", name: "Outer ring" },
+    { type: "circle", r: 228, cx: C, cy: C, strokeWidth: 3, stroke: "#000000", name: "Inner ring" },
+    {
+      type: "arc",
+      text: "COMPANY NAME",
+      radius: 196,
+      position: "top",
+      fontSize: 42,
+      fontFamily: "Oswald",
+      letterSpacing: 4,
+      cx: C,
+      cy: C,
+    },
+    {
+      type: "arc",
+      text: "EST. 2024",
+      radius: 196,
+      position: "bottom",
+      fontSize: 30,
+      fontFamily: "Oswald",
+      letterSpacing: 6,
+      cx: C,
+      cy: C,
+    },
+    {
+      type: "text",
+      text: "APPROVED",
+      fontSize: 52,
+      fontFamily: "Oswald",
+      charSpacing: 80,
+      cx: C,
+      cy: C,
+      w: 360,
+    },
+    { type: "line", x1: C - 120, y1: C - 48, x2: C + 120, y2: C - 48, strokeWidth: 4 },
+    { type: "line", x1: C - 120, y1: C + 48, x2: C + 120, y2: C + 48, strokeWidth: 4 },
+  ],
+};
