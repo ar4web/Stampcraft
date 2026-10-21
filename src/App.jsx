@@ -6,6 +6,7 @@ import RightPanel from "./components/RightPanel";
 import CanvasArea from "./components/CanvasArea";
 import ToastHost from "./components/Toast";
 import SaveLoadModal from "./components/Modals/SaveLoadModal";
+import DownloadModal from "./components/Modals/DownloadModal";
 import BottomBar from "./components/BottomBar";
 import SettingsDrawer from "./components/SettingsDrawer";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -86,6 +87,7 @@ export default function App() {
       <ToastHost />
       <SettingsDrawer />
       {modal === "saveload" && <SaveLoadModal />}
+      {modal === "download" && <DownloadModal />}
     </div>
    </ErrorBoundary>
   );

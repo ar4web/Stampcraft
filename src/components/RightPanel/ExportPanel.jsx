@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Download, FileImage, Layers as LayersIcon, Sparkles } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { doExportJPG, doExportPNG, doExportSVG } from "../../utils/actions";
 
@@ -12,36 +13,57 @@ export default function ExportPanel() {
   const opts = { transparentOnly, trim };
 
   return (
-    <div className="flex gap-1.5">
-      <div className="min-w-0 flex-1 space-y-1.5">
+    <div className="space-y-3">
+      {/* Design Name Input */}
+      <div>
+        <label className="label mb-1 text-[10px]">Stamp Title</label>
         <input
-          className="field"
+          className="field text-xs font-medium"
           aria-label="Design name"
           value={designName}
           onChange={(e) => setDesignName(e.target.value)}
           placeholder="Design name"
         />
-        <div className="flex gap-1">
-          <button type="button" className="btn flex-1 !px-1 text-[9px]" onClick={() => saveCurrent()}>
-            Save{dirty ? "*" : ""}
-          </button>
-          <button type="button" className="btn flex-1 !px-1 text-[9px]" onClick={() => saveAsNew()}>
-            Copy
-          </button>
-          <button type="button" className="btn flex-1 !px-1 text-[9px]" onClick={() => openModal("saveload")}>
-            Saved
-          </button>
-        </div>
-        <div className="flex gap-1">
+      </div>
+
+      {/* Save & Copy actions */}
+      <div className="grid grid-cols-3 gap-1">
+        <button
+          type="button"
+          className="btn text-[10px] font-semibold"
+          onClick={() => saveCurrent()}
+        >
+          Save{dirty ? "*" : ""}
+        </button>
+        <button
+          type="button"
+          className="btn text-[10px]"
+          onClick={() => saveAsNew()}
+        >
+          Duplicate
+        </button>
+        <button
+          type="button"
+          className="btn text-[10px]"
+          onClick={() => openModal("saveload")}
+        >
+          Library
+        </button>
+      </div>
+
+      {/* Surface Background Style */}
+      <div>
+        <label className="label mb-1 text-[10px]">Background</label>
+        <div className="grid grid-cols-3 gap-1">
           {[
             { id: "transparent", label: "Clear" },
-            { id: "solid", label: "Solid" },
+            { id: "solid", label: "Canvas" },
             { id: "trim", label: "Trim" },
           ].map((s) => (
             <button
               key={s.id}
               type="button"
-              className={`btn flex-1 !px-1 text-[9px] ${surface === s.id ? "btn-on" : ""}`}
+              className={`btn text-[10px] py-1 ${surface === s.id ? "btn-on" : ""}`}
               aria-pressed={surface === s.id}
               onClick={() => setSurface(s.id)}
             >
@@ -50,29 +72,49 @@ export default function ExportPanel() {
           ))}
         </div>
       </div>
-      <div className="flex w-12 shrink-0 flex-col gap-1">
-        <button
-          type="button"
-          className="btn flex-1 !px-0 text-[9px] font-semibold"
-          onClick={() => doExportPNG(3, opts)}
-        >
-          PNG
-        </button>
-        <button
-          type="button"
-          className="btn flex-1 !px-0 text-[9px] font-semibold"
-          onClick={() => doExportJPG(3, { trim })}
-        >
-          JPG
-        </button>
-        <button
-          type="button"
-          className="btn flex-1 !px-0 text-[9px] font-semibold"
-          onClick={() => doExportSVG({ transparentOnly })}
-        >
-          SVG
-        </button>
+
+      {/* Export Quick Buttons with Icons and Labels */}
+      <div>
+        <label className="label mb-1 text-[10px]">Quick Download</label>
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            type="button"
+            className="btn flex flex-col items-center justify-center py-2 h-auto text-[10px] font-bold gap-1"
+            onClick={() => doExportPNG(3, opts)}
+            title="Download transparent PNG (3x resolution)"
+          >
+            <FileImage size={15} style={{ color: "var(--accent)" }} />
+            <span>PNG</span>
+          </button>
+          <button
+            type="button"
+            className="btn flex flex-col items-center justify-center py-2 h-auto text-[10px] font-bold gap-1"
+            onClick={() => doExportSVG({ transparentOnly })}
+            title="Download scalable SVG vector"
+          >
+            <Sparkles size={15} style={{ color: "var(--accent)" }} />
+            <span>SVG</span>
+          </button>
+          <button
+            type="button"
+            className="btn flex flex-col items-center justify-center py-2 h-auto text-[10px] font-bold gap-1"
+            onClick={() => doExportJPG(3, { trim })}
+            title="Download high-resolution JPG"
+          >
+            <LayersIcon size={15} style={{ color: "var(--accent)" }} />
+            <span>JPG</span>
+          </button>
+        </div>
       </div>
+
+      {/* Open full export modal */}
+      <button
+        type="button"
+        className="btn btn-accent w-full flex items-center justify-center gap-1.5 py-2 text-xs font-bold"
+        onClick={() => openModal("download")}
+      >
+        <Download size={14} /> Full Export Options...
+      </button>
     </div>
   );
 }

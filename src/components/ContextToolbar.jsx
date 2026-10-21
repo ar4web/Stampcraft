@@ -116,11 +116,12 @@ export default function ContextToolbar({ scrollRef }) {
 
   return (
     <div
-      className="pointer-events-auto absolute z-[46] flex -translate-x-1/2 items-center gap-0.5 px-1 py-1"
+      className="pointer-events-auto absolute z-[46] flex -translate-x-1/2 items-center gap-0.5 px-1.5 py-1 rounded border shadow-xl backdrop-blur"
       style={{
         left: pos.left,
         top: pos.top,
         background: "var(--bg-panel)",
+        borderColor: "var(--border)",
       }}
     >
       <Btn title="Duplicate" shortcut="Ctrl+D" onClick={duplicateSelection}>

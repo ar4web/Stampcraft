@@ -7,6 +7,7 @@ import {
   MousePointerClick,
   Sliders,
   Ungroup,
+  Download,
 } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import DraggablePanel from "../DraggablePanel";
@@ -18,6 +19,7 @@ import TextProperties from "./TextProperties";
 import ShapeProperties from "./ShapeProperties";
 import ImageProperties from "./ImageProperties";
 import TransformBlock from "./TransformBlock";
+import ExportPanel from "./ExportPanel";
 
 function Section({ id, label, icon: Icon, openIds, setOpenIds, children, count, innerRef }) {
   const isOpen = openIds.includes(id);
@@ -65,7 +67,7 @@ export default function RightPanel() {
   const selVersion = useStampStore((s) => s.selVersion);
   const canvas = useStampStore((s) => s.canvas);
   const layerVersion = useStampStore((s) => s.layerVersion);
-  const [openIds, setOpenIds] = useState(["layers", "props", "transform"]);
+  const [openIds, setOpenIds] = useState(["layers", "props", "transform", "export"]);
   const focusSection = useStampStore((s) => s.focusSection);
   const sectionRefs = useRef({});
   const kind = selectionKind(selected);
@@ -170,6 +172,17 @@ export default function RightPanel() {
             <TransformBlock obj={selected} />
           </Section>
         )}
+
+        <Section
+          id="export"
+          innerRef={(el) => (sectionRefs.current.export = el)}
+          label="Export & Download"
+          icon={Download}
+          openIds={openIds}
+          setOpenIds={setOpenIds}
+        >
+          <ExportPanel />
+        </Section>
 
       </div>
     </DraggablePanel>
