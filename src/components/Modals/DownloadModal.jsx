@@ -35,41 +35,19 @@ export default function DownloadModal() {
       title="Export & Download Stamp"
       subtitle="Save your stamp design in ultra high resolution ready for print, documents, or digital sealing"
       onClose={closeModal}
-      width={600}
+      width={560}
     >
-      <div className="space-y-4">
-        {/* File Name Row */}
+      <div className="space-y-3.5">
+        {/* Quick Format Selector - Large, easily clickable targets */}
         <div>
-          <label className="label mb-1.5 font-semibold text-xs text-[var(--text)]">
-            File Name
+          <label className="label mb-1.5 font-bold text-xs text-[var(--text)]">
+            Select Format
           </label>
-          <div className="relative flex items-center">
-            <input
-              type="text"
-              className="field h-10 text-sm font-medium"
-              value={designName}
-              onChange={(e) => setDesignName(e.target.value)}
-              placeholder="Enter stamp name..."
-            />
-            <span
-              className="absolute right-3 text-xs font-semibold uppercase px-1.5 py-0.5 rounded"
-              style={{ background: "var(--bg-raised)", color: "var(--text-dim)" }}
-            >
-              .{format}
-            </span>
-          </div>
-        </div>
-
-        {/* Format Selector */}
-        <div>
-          <label className="label mb-1.5 font-semibold text-xs text-[var(--text)]">
-            Choose Format
-          </label>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setFormat("png")}
-              className={`flex flex-col items-start gap-1 p-3 border text-left transition-all ${
+              className={`flex flex-col items-start gap-1 p-2.5 sm:p-3 border rounded text-left transition-all ${
                 format === "png"
                   ? "border-[var(--accent)] bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]"
                   : "border-[var(--border)] hover:bg-[var(--bg-raised)]"
@@ -81,15 +59,15 @@ export default function DownloadModal() {
                 </span>
                 {format === "png" && <Check size={14} style={{ color: "var(--accent)" }} />}
               </div>
-              <span className="text-[10px]" style={{ color: "var(--text-dim)" }}>
-                Transparent alpha, perfect for docs & overlays
+              <span className="text-[10px] text-[var(--text-dim)] leading-tight">
+                Transparent alpha for docs & PDFs
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => setFormat("svg")}
-              className={`flex flex-col items-start gap-1 p-3 border text-left transition-all ${
+              className={`flex flex-col items-start gap-1 p-2.5 sm:p-3 border rounded text-left transition-all ${
                 format === "svg"
                   ? "border-[var(--accent)] bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]"
                   : "border-[var(--border)] hover:bg-[var(--bg-raised)]"
@@ -97,19 +75,19 @@ export default function DownloadModal() {
             >
               <div className="flex items-center justify-between w-full">
                 <span className="font-bold text-xs flex items-center gap-1.5 text-[var(--text)]">
-                  <Sparkles size={15} style={{ color: "var(--accent)" }} /> SVG Vector
+                  <Sparkles size={15} style={{ color: "var(--accent)" }} /> SVG
                 </span>
                 {format === "svg" && <Check size={14} style={{ color: "var(--accent)" }} />}
               </div>
-              <span className="text-[10px]" style={{ color: "var(--text-dim)" }}>
-                Infinitely scalable vector curve, ideal for CNC/laser
+              <span className="text-[10px] text-[var(--text-dim)] leading-tight">
+                Infinite vector curve for print & laser
               </span>
             </button>
 
             <button
               type="button"
               onClick={() => setFormat("jpg")}
-              className={`flex flex-col items-start gap-1 p-3 border text-left transition-all ${
+              className={`flex flex-col items-start gap-1 p-2.5 sm:p-3 border rounded text-left transition-all ${
                 format === "jpg"
                   ? "border-[var(--accent)] bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]"
                   : "border-[var(--border)] hover:bg-[var(--bg-raised)]"
@@ -117,12 +95,12 @@ export default function DownloadModal() {
             >
               <div className="flex items-center justify-between w-full">
                 <span className="font-bold text-xs flex items-center gap-1.5 text-[var(--text)]">
-                  <Layers size={15} style={{ color: "var(--accent)" }} /> JPG Photo
+                  <Layers size={15} style={{ color: "var(--accent)" }} /> JPG
                 </span>
                 {format === "jpg" && <Check size={14} style={{ color: "var(--accent)" }} />}
               </div>
-              <span className="text-[10px]" style={{ color: "var(--text-dim)" }}>
-                Solid white background, lightweight photo standard
+              <span className="text-[10px] text-[var(--text-dim)] leading-tight">
+                Solid white background image
               </span>
             </button>
           </div>
@@ -132,25 +110,25 @@ export default function DownloadModal() {
         {format !== "svg" && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="label font-semibold text-xs text-[var(--text)]">
-                Resolution & Quality
+              <label className="label font-bold text-xs text-[var(--text)]">
+                Resolution Size
               </label>
-              <span className="text-[11px] font-mono text-[var(--accent)]">
+              <span className="text-[11px] font-mono text-[var(--accent)] font-semibold">
                 {scale * 600} × {scale * 600} px ({scale}x DPI)
               </span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5">
               {[
-                { s: 1, label: "Standard", hint: "600px" },
-                { s: 2, label: "Medium", hint: "1200px" },
-                { s: 3, label: "High (3x)", hint: "1800px" },
-                { s: 4, label: "Ultra HD", hint: "2400px" },
+                { s: 1, label: "1x", hint: "600px" },
+                { s: 2, label: "2x", hint: "1200px" },
+                { s: 3, label: "3x (HD)", hint: "1800px" },
+                { s: 4, label: "4x (Ultra)", hint: "2400px" },
               ].map((item) => (
                 <button
                   key={item.s}
                   type="button"
                   onClick={() => setScale(item.s)}
-                  className={`p-2 border text-center transition-all ${
+                  className={`p-2 border rounded text-center transition-all ${
                     scale === item.s
                       ? "border-[var(--accent)] bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]"
                       : "border-[var(--border)] hover:bg-[var(--bg-raised)]"
@@ -166,43 +144,65 @@ export default function DownloadModal() {
 
         {/* Background / Crop options */}
         <div>
-          <label className="label mb-1.5 font-semibold text-xs text-[var(--text)]">
-            Background & Trim
+          <label className="label mb-1.5 font-bold text-xs text-[var(--text)]">
+            Background Transparency
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             {[
-              { id: "transparent", label: "Transparent", desc: "No background colour" },
-              { id: "solid", label: "Solid Canvas", desc: "Includes canvas paper colour" },
-              { id: "trim", label: "Auto-Trimmed", desc: "Crops to exact ink borders" },
+              { id: "transparent", label: "Transparent", desc: "No background" },
+              { id: "solid", label: "Canvas Color", desc: "Paper background" },
+              { id: "trim", label: "Tight Trim", desc: "Cropped to ink" },
             ].map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => setSurface(s.id)}
-                className={`p-2.5 border text-left transition-all ${
+                className={`p-2 border rounded text-left transition-all ${
                   surface === s.id
                     ? "border-[var(--accent)] bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]"
                     : "border-[var(--border)] hover:bg-[var(--bg-raised)]"
                 }`}
               >
-                <div className="text-xs font-semibold text-[var(--text)]">{s.label}</div>
+                <div className="text-xs font-bold text-[var(--text)]">{s.label}</div>
                 <div className="text-[9px] text-[var(--text-dim)]">{s.desc}</div>
               </button>
             ))}
           </div>
         </div>
 
+        {/* File Name Row */}
+        <div>
+          <label className="label mb-1 font-bold text-xs text-[var(--text)]">
+            File Name
+          </label>
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              className="field h-9 text-xs font-medium"
+              value={designName}
+              onChange={(e) => setDesignName(e.target.value)}
+              placeholder="Enter stamp name..."
+            />
+            <span
+              className="absolute right-2.5 text-[11px] font-semibold uppercase px-1.5 py-0.5 rounded"
+              style={{ background: "var(--bg-raised)", color: "var(--text-dim)" }}
+            >
+              .{format}
+            </span>
+          </div>
+        </div>
+
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t pt-4 mt-2" style={{ borderColor: "var(--border)" }}>
+        <div className="flex items-center justify-between border-t pt-3 mt-1" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-dim)" }}>
-            <ShieldCheck size={15} style={{ color: "var(--accent)" }} />
-            <span>100% Free · Client-Side Rendered</span>
+            <ShieldCheck size={14} style={{ color: "var(--accent)" }} />
+            <span>Ready for instant download</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="btn px-4 h-9 text-xs"
+              className="btn px-3 h-8 text-xs"
               onClick={closeModal}
             >
               Cancel
@@ -210,15 +210,15 @@ export default function DownloadModal() {
             <button
               type="button"
               onClick={handleDownload}
-              className="btn btn-accent px-5 h-9 text-xs font-bold flex items-center gap-2 shadow-lg"
+              className="btn btn-accent px-4 h-8 text-xs font-bold flex items-center gap-1.5 shadow-lg active:scale-95"
             >
               {downloaded ? (
                 <>
-                  <Check size={16} /> Downloaded!
+                  <Check size={15} /> Downloaded!
                 </>
               ) : (
                 <>
-                  <Download size={16} /> Download {format.toUpperCase()}
+                  <Download size={15} /> Download {format.toUpperCase()}
                 </>
               )}
             </button>
