@@ -1,0 +1,42 @@
+{
+  "name": "rubber-stamp-maker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite",
+    "serve": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "fabric": "6.9.1",
+    "lucide-react": "1.58.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-rnd": "10.5.3",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.17",
+    "@vitejs/plugin-react": "5.1.1",
+    "tailwindcss": "4.1.17",
+    "vite": "7.3.2",
+    "vite-plugin-singlefile": "2.3.0"
+  },
+  "description": "100% client-side rubber stamp maker built with React, Vite, Fabric.js v6, Tailwind CSS v4 and Zustand.",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "stamp",
+    "fabricjs",
+    "react",
+    "canvas"
+  ],
+  "overrides": {
+    "canvas": "npm:empty-npm-package@1.0.0",
+    "jsdom": "npm:empty-npm-package@1.0.0"
+  }
+}
