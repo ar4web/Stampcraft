@@ -22,7 +22,7 @@ function RailPicker({ label, value, fallback, onChange }) {
             aria-label={label}
           />
         </span>
-        <span className="rail-label">{label}</span>
+        <span className="sr-only">{label}</span>
       </label>
     </Tooltip>
   );
@@ -45,11 +45,7 @@ export default function SurfaceTool({ compact = false }) {
   );
 
   if (compact) {
-    return (
-      <div className="mt-auto flex w-full flex-col" style={{ borderTop: "1px solid var(--border-soft)" }}>
-        {pickers}
-      </div>
-    );
+    return <div className="flex w-full flex-col">{pickers}</div>;
   }
 
   return <div className="flex items-stretch justify-around">{pickers}</div>;

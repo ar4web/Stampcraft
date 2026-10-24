@@ -4,11 +4,6 @@ import useStampStore from "../store/useStampStore";
 import SettingsPanel from "./SettingsPanel";
 import ErrorBoundary from "./ErrorBoundary";
 
-/**
- * Standalone Settings menu. It is NOT a sidebar section: it slides in over
- * the workspace, closes on Esc / backdrop click, and the normal tool panels
- * are visible again as soon as it closes.
- */
 export default function SettingsDrawer() {
   const open = useStampStore((s) => s.settingsOpen);
   const close = useStampStore((s) => s.closeSettings);
@@ -32,51 +27,66 @@ export default function SettingsDrawer() {
         onClick={close}
         className="fixed inset-0 z-[68]"
         style={{
-          background: "rgba(5,7,12,0.65)",
+          background: "var(--scrim)",
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity .18s ease",
+          transition: "opacity .18s var(--ease)",
         }}
       />
       <aside
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Settings"
+        aria-label="Preferences"
         aria-hidden={!open}
-        className="settings-drawer fixed bottom-0 right-0 top-0 z-[70] flex w-[min(410px,94vw)] flex-col border-l shadow-2xl"
+        className="settings-drawer fixed bottom-0 right-0 top-0 z-[70] flex w-[min(520px,96vw)] flex-col border-l"
         style={{
           background: "var(--bg-panel)",
           borderColor: "var(--border)",
+          boxShadow: "var(--shadow)",
           transform: open ? "translateX(0)" : "translateX(102%)",
           visibility: open ? "visible" : "hidden",
-          transition: "transform .22s ease, visibility .22s",
+          transition: "transform .28s var(--ease), visibility .28s",
         }}
       >
         <div
-          className="flex h-11 shrink-0 items-center gap-2 border-b px-3"
+          className="flex h-12 shrink-0 items-center gap-2.5 border-b px-4"
           style={{ borderColor: "var(--border)", background: "var(--bg-raised)" }}
         >
-          <Settings2 size={15} style={{ color: "var(--text-dim)" }} />
-          <div className="flex-1">
-            <h2 className="text-[12px] font-semibold leading-tight">Studio</h2>
-            <p className="text-[10px] leading-tight" style={{ color: "var(--text-mute)" }}>
-              Setup defaults, files, and recover if something breaks
+          <span
+            className="grid h-8 w-8 place-items-center"
+            style={{ background: "var(--accent-dim)", borderRadius: "var(--radius)", color: "var(--accent)" }}
+          >
+            <Settings2 size={16} aria-hidden />
+          </span>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[14px] font-semibold leading-tight tracking-tight">Preferences</h2>
+            <p className="text-[11px] leading-tight" style={{ color: "var(--text-mute)" }}>
+              Appearance, files, and recovery
             </p>
           </div>
-          <button type="button" className="btn btn-ghost btn-icon" onClick={close} aria-label="Close settings" title="Close settings">
-            <X size={15} />
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon"
+            onClick={close}
+            aria-label="Close preferences"
+            title="Close"
+          >
+            <X size={16} />
           </button>
         </div>
-        <div className="scroll-thin flex-1 overflow-y-auto p-3">
-          {open && (
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+          {open ? (
             <ErrorBoundary compact>
               <SettingsPanel />
             </ErrorBoundary>
-          )}
+          ) : null}
         </div>
-        <div className="shrink-0 border-t px-3 py-2.5 text-[12px]" style={{ borderColor: "var(--border-soft)", color: "var(--text-dim)" }}>
-          Saved in this browser. Esc closes. Fix tab recovers a stuck session.
+        <div
+          className="shrink-0 border-t px-4 py-2.5 text-[11px] leading-relaxed"
+          style={{ borderColor: "var(--border-soft)", color: "var(--text-mute)", background: "var(--bg-raised)" }}
+        >
+          Stored in this browser. Esc closes.
         </div>
       </aside>
     </>

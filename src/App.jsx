@@ -56,6 +56,13 @@ export default function App() {
   useEffect(() => {
     applyTheme(theme);
     useStampStore.getState().applyPersonalisation();
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const onChange = () => {
+      const t = useStampStore.getState().theme;
+      if (t === "system") applyTheme("system");
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

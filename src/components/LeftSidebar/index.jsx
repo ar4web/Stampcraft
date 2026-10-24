@@ -7,10 +7,10 @@ import {
   Droplets,
   Flower2,
   GripVertical,
+  FolderOpen,
   Image as ImageIcon,
   LayoutGrid,
   Scan,
-  Shapes,
   Type,
   Wand2,
 } from "lucide-react";
@@ -19,7 +19,6 @@ import { useIsMobile } from "../DraggablePanel";
 import Tooltip from "../Tooltip";
 import TextTool from "./TextTool";
 import AutoDesignTool from "./AutoDesignTool";
-import ShapeTool from "./ShapeTool";
 import ImageTool from "./ImageTool";
 import SurfaceTool from "./SurfaceTool";
 import TemplateGallery from "./TemplateGallery";
@@ -31,23 +30,23 @@ import DistressTool from "./DistressTool";
 import ClipTool from "./ClipTool";
 
 const SECTIONS = [
-  { id: "template", label: "Templates", short: "Temp", icon: LayoutGrid, Component: TemplateGallery },
-  { id: "text", label: "Text", short: "Text", icon: Type, Component: TextTool },
-  { id: "shape", label: "Shape", short: "Shape", icon: Shapes, Component: ShapeTool },
-  { id: "border", label: "Borders", short: "Frame", icon: Scan, Component: BorderTool },
-  { id: "ornament", label: "Ornaments", short: "Orn.", icon: Flower2, Component: OrnamentTool },
-  { id: "auto", label: "Auto Design", short: "Auto", icon: Wand2, Component: AutoDesignTool },
-  { id: "image", label: "Logo", short: "Logo", icon: ImageIcon, Component: ImageTool },
-  { id: "mark", label: "Marks", short: "Mark", icon: BadgeCheck, Component: MarkTool },
-  { id: "align", label: "Align", short: "Align", icon: Crosshair, Component: AlignTool },
-  { id: "distress", label: "Distress", short: "Wear", icon: Droplets, Component: DistressTool },
-  { id: "clip", label: "Clips", short: "Clip", icon: Bookmark, Component: ClipTool },
+  { id: "template", label: "Templates", icon: LayoutGrid, Component: TemplateGallery },
+  { id: "text", label: "Text", icon: Type, Component: TextTool },
+  { id: "border", label: "Frame", icon: Scan, Component: BorderTool },
+  { id: "ornament", label: "Ornaments", icon: Flower2, Component: OrnamentTool },
+  { id: "auto", label: "Auto Design", icon: Wand2, Component: AutoDesignTool },
+  { id: "image", label: "Logo", icon: ImageIcon, Component: ImageTool },
+  { id: "mark", label: "Marks", icon: BadgeCheck, Component: MarkTool },
+  { id: "align", label: "Align", icon: Crosshair, Component: AlignTool },
+  { id: "distress", label: "Distress", icon: Droplets, Component: DistressTool },
+  { id: "clip", label: "Clips", icon: Bookmark, Component: ClipTool },
 ];
 
 export default function LeftSidebar() {
   const pulse = useStampStore((s) => s.pulseTemplates);
   const leftOpen = useStampStore((s) => s.leftOpen);
   const toggleLeft = useStampStore((s) => s.toggleLeft);
+  const openModal = useStampStore((s) => s.openModal);
   const mobile = useIsMobile();
 
   const [active, setActive] = useState("template");
@@ -95,6 +94,8 @@ export default function LeftSidebar() {
               <button
                 key={s.id}
                 aria-selected={active === s.id}
+                aria-label={s.label}
+                title={s.label}
                 onClick={() => setActive(s.id)}
                 className="rail-btn !h-11 !w-14 shrink-0 !border-l-0 !border-b-2"
                 style={
@@ -103,8 +104,7 @@ export default function LeftSidebar() {
                     : { borderBottomColor: "transparent" }
                 }
               >
-                <s.icon size={14} />
-                <span className="rail-label">{s.short}</span>
+                <s.icon size={16} />
               </button>
             ))}
           </div>
@@ -112,6 +112,14 @@ export default function LeftSidebar() {
             <Current />
           </div>
           <div className="shrink-0 border-t px-3 py-2" style={{ borderColor: "var(--border-soft)" }}>
+            <button
+              type="button"
+              className="btn w-full mb-2"
+              aria-label="My Stamps"
+              onClick={() => openModal("saveload")}
+            >
+              <FolderOpen size={14} /> My Stamps
+            </button>
             <SurfaceTool />
           </div>
         </aside>
@@ -152,14 +160,26 @@ export default function LeftSidebar() {
                   s.id === "mark" ? "mt-2" : ""
                 }`}
               >
-                <s.icon size={16} />
-                <span className="rail-label">{s.short}</span>
+                <s.icon size={18} />
               </button>
             </Tooltip>
           );
         })}
         </div>
-        <SurfaceTool compact />
+        <div className="mt-auto flex w-full flex-col" style={{ borderTop: "1px solid var(--border-soft)" }}>
+          <Tooltip label="My Stamps" side="right" className="w-full">
+            <button
+              type="button"
+              className="rail-btn"
+              aria-label="My Stamps"
+              title="My Stamps"
+              onClick={() => openModal("saveload")}
+            >
+              <FolderOpen size={18} />
+            </button>
+          </Tooltip>
+          <SurfaceTool compact />
+        </div>
       </nav>
 
       <div

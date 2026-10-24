@@ -43,7 +43,7 @@ export function Checkbox({ label, checked, onChange, hint }) {
             borderColor: checked ? "var(--accent)" : "var(--border-soft)",
           }}
         >
-          {checked && <Check size={12} color="#fff" strokeWidth={3} aria-hidden />}
+            {checked && <Check size={12} color="var(--on-accent)" strokeWidth={3} aria-hidden />}
         </span>
         <span className="text-[11px] font-medium leading-snug">{label}</span>
       </button>
@@ -221,7 +221,7 @@ export function SegButton({ options, value, onChange, label }) {
               style={{
                 minHeight: "var(--ctl-h)",
                 background: on ? "var(--accent)" : "transparent",
-                color: on ? "#fff" : "var(--text-dim)",
+                color: on ? "var(--on-accent)" : "var(--text-dim)",
                 borderLeft: i ? "1px solid var(--border-soft)" : "none",
               }}
             >
