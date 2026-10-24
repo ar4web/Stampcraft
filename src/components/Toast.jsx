@@ -33,10 +33,10 @@ export default function ToastHost() {
     >
       <div
         className="toast-in pointer-events-auto flex w-full items-center gap-2 px-2.5 py-1.5"
-        style={{ background: "var(--bg-raised)", color: "var(--text)" }}
+        style={{ background: "var(--bg-raised)", color: "var(--text)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", boxShadow: "var(--shadow)" }}
       >
         <Icon size={12} style={{ color: tint }} className="shrink-0" />
-        <p className="min-w-0 flex-1 truncate text-[10px] leading-snug">{t.message}</p>
+        <p className="min-w-0 flex-1 truncate text-[12px] leading-snug">{t.message}</p>
         {t.action && (
           <button
             type="button"

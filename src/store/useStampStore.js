@@ -8,6 +8,7 @@ import {
   thumbnail,
 } from "../utils/canvas";
 import * as storage from "../utils/storage";
+import { applyAccent, applyCorners, applyThemeClass, DEFAULT_ACCENT } from "../utils/theme";
 
 export const history = createHistory();
 
@@ -103,11 +104,11 @@ export const useStampStore = create((set, get) => ({
   toggleSettings: () => set((x) => ({ settingsOpen: !x.settingsOpen })),
 
   /* ---------------- personalisation / accessibility ---------------- */
-  accentColor: storage.getPrefs().accentColor ?? "#8d7a5a",
+  accentColor: storage.getPrefs().accentColor ?? DEFAULT_ACCENT,
   setAccentColor: (hex) => {
     if (!/^#([0-9a-f]{6})$/i.test(hex || "")) return;
     storage.setPrefs({ accentColor: hex });
-    document.documentElement.style.setProperty("--accent", hex);
+    applyAccent(hex);
     set({ accentColor: hex });
   },
   a11y: {
@@ -131,23 +132,31 @@ export const useStampStore = create((set, get) => ({
     });
     set({ a11y: next });
   },
+  uiRadius: storage.getPrefs().uiRadius ?? "soft",
+  setUiRadius: (style) => {
+    const next = applyCorners(style);
+    storage.setPrefs({ uiRadius: next });
+    set({ uiRadius: next });
+  },
   applyPersonalisation: () => {
     const st = get();
-    document.documentElement.style.setProperty("--accent", st.accentColor || "#8d7a5a");
+    applyAccent(st.accentColor || DEFAULT_ACCENT);
+    applyCorners(st.uiRadius || "soft");
     get().setA11y({ ...st.a11y });
   },
 
   /* ---------------- theme ----------------- */
   theme: storage.getTheme(),
   applyTheme: (theme) => {
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-    root.classList.toggle("light", theme === "light");
+    applyThemeClass(theme);
     storage.setTheme(theme);
     set({ theme });
+    applyAccent(get().accentColor || DEFAULT_ACCENT);
   },
-  toggleTheme: () =>
-    get().applyTheme(get().theme === "dark" ? "light" : "dark"),
+  toggleTheme: () => {
+    const next = applyThemeClass(get().theme) === "dark" ? "light" : "dark";
+    get().applyTheme(next);
+  },
 
   /* ---------------- ink ------------------- */
   inkColor: storage.getPrefs().inkColor ?? "#003399",

@@ -32,11 +32,13 @@ export default class ErrorBoundary extends Component {
 
   render() {
     const { error } = this.state;
-    if (!error) return this.props.children;
+    if (!error) {
+      return this.props.compact ? <div className="contents">{this.props.children}</div> : this.props.children;
+    }
 
     if (this.props.compact) {
       return (
-        <div className="border p-3 text-center" style={{ borderColor: "var(--danger, #ef4444)" }}>
+        <div className="m-3 flex-1 border p-3 text-center" style={{ borderColor: "var(--danger, #ef4444)", borderRadius: "var(--radius-lg)" }}>
           <AlertTriangle size={18} className="mx-auto mb-2" style={{ color: "var(--danger, #ef4444)" }} />
           <p className="mb-1 text-[11px] font-semibold">This panel failed to load</p>
           <p className="mb-3 text-[10px]" style={{ color: "var(--text-dim)" }}>

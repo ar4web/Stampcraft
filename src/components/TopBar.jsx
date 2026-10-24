@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import useStampStore from "../store/useStampStore";
 import { clearCanvas, doExportJPG, doExportPNG, doExportSVG } from "../utils/actions";
+import { resolveTheme } from "../utils/theme";
 import Tooltip from "./Tooltip";
 
 function ToolBtn({ label, hint, onClick, disabled, children, danger, ok, active, badge }) {
@@ -26,7 +27,7 @@ function ToolBtn({ label, hint, onClick, disabled, children, danger, ok, active,
         aria-label={label}
         onClick={onClick}
         disabled={disabled}
-        className={`btn flex items-center gap-1.5 h-8 px-2.5 text-[11px] font-medium transition-all ${
+        className={`btn btn-icon h-8 w-8 p-0 ${
           danger ? "btn-danger" : ""
         } ${ok ? "btn-ok" : ""} ${active ? "btn-on" : ""}`}
       >
@@ -34,7 +35,7 @@ function ToolBtn({ label, hint, onClick, disabled, children, danger, ok, active,
         {badge && (
           <span
             className="ml-0.5 px-1 py-0.2 rounded text-[9px] font-bold"
-            style={{ background: "var(--accent)", color: "#fff" }}
+            style={{ background: "var(--accent)", color: "var(--on-accent)" }}
           >
             {badge}
           </span>
@@ -92,10 +93,10 @@ export default function TopBar() {
       {/* Brand & Project Info */}
       <div className="flex min-w-0 items-center gap-2">
         <div
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-sm shadow-sm"
-          style={{ background: "var(--accent)" }}
+          className="grid h-7 w-7 shrink-0 place-items-center shadow-sm"
+          style={{ background: "var(--accent)", borderRadius: "var(--radius)" }}
         >
-          <Stamp size={15} color="#fff" />
+          <Stamp size={15} color="var(--on-accent)" />
         </div>
         <div className="flex flex-col">
           <span className="text-[13px] font-bold tracking-tight text-[var(--text)] leading-none">
@@ -146,25 +147,17 @@ export default function TopBar() {
         <div className="flex items-center gap-1 sm:gap-1.5">
           <ToolBtn label="Save Design" hint="Ctrl+S" ok onClick={() => saveCurrent()}>
             <Save size={14} />
-            <span className="hidden sm:inline">Save</span>
           </ToolBtn>
 
-          <ToolBtn label="Saved Designs" hint="Open design library" onClick={() => openModal("saveload")}>
-            <FolderOpen size={14} />
-            <span className="hidden sm:inline">My Stamps</span>
-          </ToolBtn>
-
-          {/* Quick Select Split Download Button */}
           <div ref={dropdownRef} className="relative flex items-stretch">
-            {/* Direct 1-click download button */}
             <button
               type="button"
               onClick={() => doExportPNG(3, { transparentOnly: true })}
-              className="btn btn-accent flex items-center gap-1.5 h-8 px-2.5 sm:px-3 text-[11px] font-bold shadow-md hover:brightness-110 active:scale-95"
-              title="1-Click Quick Download PNG (Transparent, High Res 3x)"
+              className="btn btn-accent btn-icon h-8 w-8 p-0 shadow-md hover:brightness-110 active:scale-95"
+              aria-label="Download PNG"
+              title="Download PNG (transparent, 3x)"
             >
               <Download size={14} />
-              <span>Download</span>
             </button>
 
             {/* Dropdown caret trigger for instant mouse selection of formats */}
@@ -279,19 +272,22 @@ export default function TopBar() {
       <div className="flex items-center gap-0.5 sm:gap-1">
         <ToolBtn label="Clear Canvas" hint="Ctrl+N" danger onClick={() => clearCanvas()}>
           <Trash2 size={14} />
-          <span className="hidden lg:inline text-[11px]">Clear</span>
         </ToolBtn>
 
         <div className="h-4 w-px mx-0.5" style={{ background: "var(--border)" }} />
 
         <ToolBtn
-          label={theme === "dark" ? "Light theme" : "Dark theme"}
+          label={resolveTheme(theme) === "dark" ? "Light theme" : "Dark theme"}
           onClick={toggleTheme}
         >
-          {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+          {resolveTheme(theme) === "dark" ? <Sun size={14} /> : <Moon size={14} />}
         </ToolBtn>
 
-        <ToolBtn label="Studio Preferences" hint="Ctrl+K" onClick={toggleSettings}>
+        <ToolBtn label="My Stamps" hint="Saved designs" onClick={() => openModal("saveload")}>
+          <FolderOpen size={14} />
+        </ToolBtn>
+
+        <ToolBtn label="Preferences" hint="Ctrl+K" onClick={toggleSettings}>
           <Settings2 size={14} />
         </ToolBtn>
       </div>
