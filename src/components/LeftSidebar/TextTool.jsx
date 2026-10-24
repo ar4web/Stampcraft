@@ -95,10 +95,6 @@ export default function TextTool() {
         </div>
       )}
 
-      <Row label="Language / Script">
-        <input className="field field-ghost" value="Auto" readOnly tabIndex={-1} aria-label="Language script" />
-      </Row>
-
       <Row label="Content" hint={rtl ? "RTL" : "LTR"}>
         <div className="border" style={{ borderColor: "var(--border-soft)", background: "var(--bg-sunken)" }}>
           <textarea

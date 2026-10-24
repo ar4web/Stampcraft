@@ -55,10 +55,6 @@ export default function AutoDesignTool() {
         </p>
       </div>
 
-      <Row label="Language / Script">
-        <input className="field field-ghost" value="Auto" readOnly tabIndex={-1} aria-label="Language script" />
-      </Row>
-
       <Row label="Company name">
         <input
           className="field"

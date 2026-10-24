@@ -34,12 +34,12 @@ const SECTIONS = [
   { id: "text", label: "Text", icon: Type, Component: TextTool },
   { id: "border", label: "Frame", icon: Scan, Component: BorderTool },
   { id: "ornament", label: "Ornaments", icon: Flower2, Component: OrnamentTool },
-  { id: "auto", label: "Auto Design", icon: Wand2, Component: AutoDesignTool },
   { id: "image", label: "Logo", icon: ImageIcon, Component: ImageTool },
   { id: "mark", label: "Marks", icon: BadgeCheck, Component: MarkTool },
   { id: "align", label: "Align", icon: Crosshair, Component: AlignTool },
   { id: "distress", label: "Distress", icon: Droplets, Component: DistressTool },
   { id: "clip", label: "Clips", icon: Bookmark, Component: ClipTool },
+  { id: "auto", label: "Auto Design", icon: Wand2, Component: AutoDesignTool },
 ];
 
 export default function LeftSidebar() {
@@ -157,7 +157,7 @@ export default function LeftSidebar() {
                   }
                 }}
                 className={`rail-btn ${pulse && s.id === "template" ? "pulse-hint" : ""} ${
-                  s.id === "mark" ? "mt-2" : ""
+                  s.id === "auto" ? "mt-2" : ""
                 }`}
               >
                 <s.icon size={18} />
