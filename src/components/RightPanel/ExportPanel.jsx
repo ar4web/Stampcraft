@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Download, FileImage, Layers as LayersIcon, Sparkles } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { doExportJPG, doExportPNG, doExportSVG } from "../../utils/actions";
+import { PRINT_SIZES } from "../../utils/print";
 
 export default function ExportPanel() {
   const { designName, setDesignName, saveCurrent, saveAsNew, openModal, dirty } =
     useStampStore();
   const [surface, setSurface] = useState("transparent");
+  const [sizeMm, setSizeMm] = useState(38);
   const transparentOnly = surface === "transparent";
   const trim = surface === "trim";
 
-  const opts = { transparentOnly, trim };
+  const opts = { transparentOnly, trim, sizeMm, dpi: 300, bleedMm: 1, cmykSafe: true, bumpSerial: true, name: designName };
 
   return (
     <div className="space-y-3">
@@ -53,11 +55,11 @@ export default function ExportPanel() {
 
       {/* Surface Background Style */}
       <div>
-        <label className="label mb-1 text-[10px]">Background</label>
+        <label className="label mb-1 text-[10px]">Download surface</label>
         <div className="grid grid-cols-3 gap-1">
           {[
-            { id: "transparent", label: "Clear" },
-            { id: "solid", label: "Canvas" },
+            { id: "transparent", label: "Stamp" },
+            { id: "solid", label: "Paper" },
             { id: "trim", label: "Trim" },
           ].map((s) => (
             <button
@@ -66,6 +68,26 @@ export default function ExportPanel() {
               className={`btn text-[10px] py-1 ${surface === s.id ? "btn-on" : ""}`}
               aria-pressed={surface === s.id}
               onClick={() => setSurface(s.id)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-[10px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
+          Paper is for brainstorming on the desk. Downloads are stamp-only unless you pick Paper.
+        </p>
+      </div>
+
+      <div>
+        <label className="label mb-1 text-[10px]">Print size</label>
+        <div className="grid grid-cols-3 gap-1">
+          {PRINT_SIZES.slice(0, 6).map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={`btn text-[10px] py-1 ${sizeMm === s.mm ? "btn-on" : ""}`}
+              aria-pressed={sizeMm === s.mm}
+              onClick={() => setSizeMm(s.mm)}
             >
               {s.label}
             </button>
@@ -80,8 +102,8 @@ export default function ExportPanel() {
           <button
             type="button"
             className="btn flex flex-col items-center justify-center py-2 h-auto text-[10px] font-bold gap-1"
-            onClick={() => doExportPNG(3, opts)}
-            title="Download transparent PNG (3x resolution)"
+            onClick={() => doExportPNG(1, opts)}
+            title="Download print-ready PNG at 300 dpi"
           >
             <FileImage size={15} style={{ color: "var(--accent)" }} />
             <span>PNG</span>
@@ -98,8 +120,8 @@ export default function ExportPanel() {
           <button
             type="button"
             className="btn flex flex-col items-center justify-center py-2 h-auto text-[10px] font-bold gap-1"
-            onClick={() => doExportJPG(3, { trim })}
-            title="Download high-resolution JPG"
+            onClick={() => doExportJPG(1, { ...opts, transparentOnly: false })}
+            title="Download print-ready JPG at 300 dpi"
           >
             <LayersIcon size={15} style={{ color: "var(--accent)" }} />
             <span>JPG</span>

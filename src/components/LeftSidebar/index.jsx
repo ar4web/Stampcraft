@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
   Bookmark,
+  CalendarDays,
   ChevronLeft,
   Crosshair,
   Droplets,
@@ -28,18 +29,20 @@ import MarkTool from "./MarkTool";
 import AlignTool from "./AlignTool";
 import DistressTool from "./DistressTool";
 import ClipTool from "./ClipTool";
+import FieldTool from "./FieldTool";
 
 const SECTIONS = [
-  { id: "template", label: "Templates", icon: LayoutGrid, Component: TemplateGallery },
-  { id: "text", label: "Text", icon: Type, Component: TextTool },
-  { id: "border", label: "Frame", icon: Scan, Component: BorderTool },
-  { id: "ornament", label: "Ornaments", icon: Flower2, Component: OrnamentTool },
-  { id: "image", label: "Logo", icon: ImageIcon, Component: ImageTool },
-  { id: "mark", label: "Marks", icon: BadgeCheck, Component: MarkTool },
-  { id: "align", label: "Align", icon: Crosshair, Component: AlignTool },
-  { id: "distress", label: "Distress", icon: Droplets, Component: DistressTool },
-  { id: "clip", label: "Clips", icon: Bookmark, Component: ClipTool },
-  { id: "auto", label: "Auto Design", icon: Wand2, Component: AutoDesignTool },
+  { id: "template", label: "Templates", hint: "Start from a layout", icon: LayoutGrid, Component: TemplateGallery },
+  { id: "text", label: "Text", hint: "Straight or curved", icon: Type, Component: TextTool },
+  { id: "border", label: "Frame", hint: "Outer stamp shape", icon: Scan, Component: BorderTool },
+  { id: "ornament", label: "Ornaments", hint: "Stars, seals, flourishes", icon: Flower2, Component: OrnamentTool },
+  { id: "image", label: "Logo", hint: "Drop, knock out, vectorize", icon: ImageIcon, Component: ImageTool },
+  { id: "mark", label: "Marks", hint: "APPROVED, PAID, COPY", icon: BadgeCheck, Component: MarkTool },
+  { id: "fields", label: "Date / No.", hint: "Live date, time, serial", icon: CalendarDays, Component: FieldTool },
+  { id: "align", label: "Align", hint: "Centre and snap", icon: Crosshair, Component: AlignTool },
+  { id: "distress", label: "Distress", hint: "Worn rubber ink", icon: Droplets, Component: DistressTool },
+  { id: "clip", label: "Clips", hint: "Reuse motifs", icon: Bookmark, Component: ClipTool },
+  { id: "auto", label: "Auto Design", hint: "Build a full stamp", icon: Wand2, Component: AutoDesignTool },
 ];
 
 export default function LeftSidebar() {
@@ -142,7 +145,7 @@ export default function LeftSidebar() {
         {SECTIONS.map((s) => {
           const on = active === s.id;
           return (
-            <Tooltip label={s.label} side="right" key={s.id} className="w-full">
+            <Tooltip label={s.label} hint={s.hint} side="right" key={s.id} className="w-full">
               <button
                 key={s.id}
                 aria-selected={on && openPanel}
@@ -167,7 +170,7 @@ export default function LeftSidebar() {
         })}
         </div>
         <div className="mt-auto flex w-full flex-col" style={{ borderTop: "1px solid var(--border-soft)" }}>
-          <Tooltip label="My Stamps" side="right" className="w-full">
+          <Tooltip label="My Stamps" hint="Library · import .stamp" shortcut="Ctrl+S" side="right" className="w-full">
             <button
               type="button"
               className="rail-btn"

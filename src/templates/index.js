@@ -6,6 +6,7 @@ import starSeal from "./starSeal.js";
 import squareSeal from "./squareSeal.js";
 import modernRect from "./modernRect.js";
 import dateStamp from "./dateStamp.js";
+import serialStamp from "./serialStamp.js";
 import confidential from "./confidential.js";
 import signatureLine from "./signatureLine.js";
 import minimalLine from "./minimalLine.js";
@@ -27,6 +28,7 @@ export const TEMPLATES = [
   annotate(squareSeal, "Square & Rect", 10),
   annotate(modernRect, "Square & Rect", 11),
   annotate(dateStamp, "Square & Rect", 12),
+  annotate(serialStamp, "Square & Rect", 12.5),
   annotate(confidential, "Square & Rect", 13),
   annotate(signatureLine, "Square & Rect", 14),
   annotate(minimalLine, "Square & Rect", 15),

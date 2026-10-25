@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Save, Trash2, Upload, Pencil } from "lucide-react";
+import { useRef, useState } from "react";
+import { Download, Save, Trash2, Upload, Pencil } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { renameDesign } from "../../utils/storage";
 import Modal from "./Modal";
@@ -16,9 +16,12 @@ export default function SaveLoadModal() {
     removeDesign,
     refreshDesigns,
     currentDesignId,
+    exportStampFile,
+    importStampFile,
   } = useStampStore();
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState("");
+  const stampRef = useRef(null);
 
   return (
     <Modal
@@ -41,6 +44,25 @@ export default function SaveLoadModal() {
         <button className="btn" onClick={() => saveAsNew()}>
           Save as copy
         </button>
+        <button type="button" className="btn" onClick={() => exportStampFile()}>
+          <Download size={14} /> .stamp
+        </button>
+        <button type="button" className="btn" onClick={() => stampRef.current?.click()}>
+          <Upload size={14} /> Import
+        </button>
+        <input
+          ref={stampRef}
+          type="file"
+          accept=".stamp,application/json"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            await importStampFile(file);
+            closeModal();
+          }}
+        />
       </div>
 
       {!designs.length ? (

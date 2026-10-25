@@ -21,7 +21,7 @@ import Tooltip from "./Tooltip";
 
 function ToolBtn({ label, hint, onClick, disabled, children, danger, ok, active, badge }) {
   return (
-    <Tooltip label={label} hint={hint} side="bottom" delay={120}>
+    <Tooltip label={label} hint={hint} shortcut={hint && /Ctrl|Del|Esc/.test(hint) ? hint : undefined} side="bottom" delay={120}>
       <button
         type="button"
         aria-label={label}
@@ -150,15 +150,16 @@ export default function TopBar() {
           </ToolBtn>
 
           <div ref={dropdownRef} className="relative flex items-stretch">
+            <Tooltip label="Download PNG" hint="Stamp only · no paper" shortcut="Ctrl+E" side="bottom">
             <button
               type="button"
               onClick={() => doExportPNG(3, { transparentOnly: true })}
               className="btn btn-accent btn-icon h-8 w-8 p-0 shadow-md hover:brightness-110 active:scale-95"
               aria-label="Download PNG"
-              title="Download PNG (transparent, 3x)"
             >
               <Download size={14} />
             </button>
+            </Tooltip>
 
             {/* Dropdown caret trigger for instant mouse selection of formats */}
             <button
@@ -283,7 +284,7 @@ export default function TopBar() {
           {resolveTheme(theme) === "dark" ? <Sun size={14} /> : <Moon size={14} />}
         </ToolBtn>
 
-        <ToolBtn label="My Stamps" hint="Saved designs" onClick={() => openModal("saveload")}>
+        <ToolBtn label="My Stamps" hint="Library · .stamp files" onClick={() => openModal("saveload")}>
           <FolderOpen size={14} />
         </ToolBtn>
 

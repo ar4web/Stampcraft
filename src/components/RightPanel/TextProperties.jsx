@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { rebuildArc, toggleTextCurve } from "../../utils/canvas";
+import { DATE_FORMATS, fieldText } from "../../utils/fields";
 import { isRTL } from "../../utils/arabic";
 import { FONT_SETS, getCustomFonts, importFontFile, loadFont } from "../../utils/fonts";
 import { Row, Slider } from "../ui";
@@ -132,6 +133,120 @@ export default function TextProperties({ obj, kind }) {
 
   return (
     <div className="space-y-3">
+      {!meta.field && !isArc && (
+        <Row label="Live field">
+          <div className="grid grid-cols-2 gap-1">
+            {["date", "time", "serial", "datetime"].map((id) => (
+              <button
+                key={id}
+                type="button"
+                className="btn text-[10px]"
+                onClick={() => {
+                  const next = {
+                    ...(obj.stampMeta || {}),
+                    kind: "text",
+                    field: id,
+                    dateFormat: "DD MMM YYYY",
+                    serialPrefix: "NO. ",
+                    serialValue: 1,
+                    serialPad: 4,
+                  };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) });
+                }}
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+        </Row>
+      )}
+
+      {meta.field && (
+        <Row label="Live field" hint={meta.field}>
+          <div className="grid grid-cols-2 gap-1 mb-1.5">
+            {["date", "time", "datetime", "serial"].map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`btn text-[10px] ${meta.field === id ? "btn-on" : ""}`}
+                onClick={() => {
+                  const next = { ...meta, field: id };
+                  if (id === "serial") {
+                    next.serialPrefix = next.serialPrefix ?? "NO. ";
+                    next.serialValue = next.serialValue ?? 1;
+                    next.serialPad = next.serialPad ?? 4;
+                  }
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) });
+                }}
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+          {(meta.field === "date" || meta.field === "datetime") && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {DATE_FORMATS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`btn !min-h-6 !px-1.5 text-[9px] ${meta.dateFormat === f.id ? "btn-on" : ""}`}
+                  onClick={() => {
+                    const next = { ...meta, dateFormat: f.id };
+                    obj.stampMeta = next;
+                    update({ text: fieldText(next) });
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {meta.field === "serial" && (
+            <div className="grid grid-cols-3 gap-1">
+              <input
+                className="field"
+                aria-label="Serial prefix"
+                value={meta.serialPrefix ?? "NO. "}
+                onChange={(e) => {
+                  const next = { ...meta, serialPrefix: e.target.value };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) }, { silent: true });
+                }}
+                onBlur={() => commit()}
+              />
+              <input
+                className="field"
+                type="number"
+                aria-label="Serial value"
+                value={meta.serialValue ?? 1}
+                onChange={(e) => {
+                  const next = { ...meta, serialValue: Number(e.target.value) || 1 };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) }, { silent: true });
+                }}
+                onBlur={() => commit()}
+              />
+              <input
+                className="field"
+                type="number"
+                aria-label="Serial digits"
+                value={meta.serialPad ?? 4}
+                min={1}
+                max={8}
+                onChange={(e) => {
+                  const next = { ...meta, serialPad: Number(e.target.value) || 4 };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) }, { silent: true });
+                }}
+                onBlur={() => commit()}
+              />
+            </div>
+          )}
+        </Row>
+      )}
+
       <Row label="Content">
         <textarea
           className="field resize-none"

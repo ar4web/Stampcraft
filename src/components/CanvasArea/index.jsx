@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import useStampStore from "../../store/useStampStore";
 import useCanvas from "../../hooks/useCanvas";
-import { CANVAS_SIZE, addImageFromFile } from "../../utils/canvas";
+import { CANVAS_SIZE, addImageFromFile, applyStampFilter, clipObjectToRing } from "../../utils/canvas";
+import { isStampFile } from "../../utils/stampfile";
 import {
   alignSelection,
   bringToFront,
@@ -99,7 +100,17 @@ export default function CanvasArea() {
     const file = e.dataTransfer.files?.[0];
     if (!file || !store.canvas) return;
     try {
-      await addImageFromFile(store.canvas, file);
+      if (isStampFile(file)) {
+        await store.importStampFile(file);
+        return;
+      }
+      const obj = await addImageFromFile(store.canvas, file);
+      if (obj.type === "image") await applyStampFilter(store.canvas, obj, true);
+      try {
+        await clipObjectToRing(store.canvas, obj);
+      } catch {
+        /* no frame yet */
+      }
       store.commit();
       store.syncSelection();
       store.toast(`Imported ${file.name}`, "success");
@@ -194,6 +205,14 @@ export default function CanvasArea() {
         }}
         onDragLeave={() => setDropping(false)}
         onDrop={onDrop}
+        onMouseDown={(e) => {
+          if (e.target.tagName === "CANVAS") return;
+          const canvas = useStampStore.getState().canvas;
+          if (!canvas?.getActiveObject()) return;
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
+          useStampStore.getState().syncSelection();
+        }}
         className={`scroll-thin absolute inset-0 overflow-auto ${
           workspaceColor === "checkerboard" ? "workspace-checkerboard" : ""
         }`}

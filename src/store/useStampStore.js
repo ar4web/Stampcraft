@@ -9,6 +9,10 @@ import {
 } from "../utils/canvas";
 import * as storage from "../utils/storage";
 import { applyAccent, applyCorners, applyThemeClass, DEFAULT_ACCENT } from "../utils/theme";
+import { refreshLiveFields } from "../utils/fields";
+import { buildStampFile, downloadStampFile, parseStampFile } from "../utils/stampfile";
+import { objectInkHex } from "../utils/color";
+import { tintFabricImage } from "../utils/image";
 
 export const history = createHistory();
 
@@ -28,7 +32,12 @@ export const useStampStore = create((set, get) => ({
     const c = get().canvas;
     if (!c) return;
     const active = c.getActiveObject() || null;
-    set((s) => ({ selected: active, selVersion: s.selVersion + 1 }));
+    const ink = objectInkHex(active);
+    set((s) => ({
+      selected: active,
+      selVersion: s.selVersion + 1,
+      ...(ink ? { inkColor: ink } : {}),
+    }));
   },
   touchSelection: () => set((s) => ({ selVersion: s.selVersion + 1 })),
   touchLayers: () => set((s) => ({ layerVersion: s.layerVersion + 1 })),
@@ -158,6 +167,30 @@ export const useStampStore = create((set, get) => ({
     get().applyTheme(next);
   },
 
+  palettes: storage.getPalettes(),
+  refreshPalettes: () => set({ palettes: storage.getPalettes() }),
+  savePalette: (name, colors) => {
+    const record = storage.savePalette({
+      name,
+      colors: colors || [get().inkColor],
+    });
+    set({ palettes: storage.getPalettes() });
+    get().toast(`Saved ink set "${record.name}"`, "success");
+    return record;
+  },
+  removePalette: (id) => {
+    storage.deletePalette(id);
+    set({ palettes: storage.getPalettes() });
+    get().toast("Ink set removed", "info");
+  },
+
+  company: storage.getCompany(),
+  setCompany: (patch) => {
+    const company = storage.setCompany(patch);
+    set({ company });
+    return company;
+  },
+
   /* ---------------- ink ------------------- */
   inkColor: storage.getPrefs().inkColor ?? "#003399",
   setInkColor: (inkColor) => {
@@ -166,11 +199,17 @@ export const useStampStore = create((set, get) => ({
     const c = get().canvas;
     if (!c) return;
     const active = c.getActiveObjects() || [];
-    const objs = active.length ? [...active] : [...c.getObjects()];
+    const objs = active.length ? [...active] : [];
     if (!objs.length) return;
+    const jobs = [];
     objs.forEach((o) => {
+      if (o.stampMeta) o.stampMeta = { ...o.stampMeta, ink: inkColor };
       if (o.stampMeta?.kind === "arc") {
         rebuildArc(c, o, { fill: inkColor });
+        return;
+      }
+      if (o.type === "image") {
+        jobs.push(tintFabricImage(c, o, inkColor));
         return;
       }
       const solid = o.fill && o.fill !== "transparent";
@@ -184,9 +223,13 @@ export const useStampStore = create((set, get) => ({
       }
       o.setCoords?.();
     });
-    c.requestRenderAll();
-    get().commit();
-    get().touchSelection();
+    const finish = () => {
+      c.requestRenderAll();
+      get().commit();
+      get().touchSelection();
+    };
+    if (jobs.length) Promise.all(jobs).then(finish).catch(finish);
+    else finish();
   },
 
   /* ---------------- colours --------------- */
@@ -346,6 +389,53 @@ export const useStampStore = create((set, get) => ({
     storage.deleteDesign(id);
     set({ designs: storage.getDesigns() });
     get().toast("Design deleted", "info");
+  },
+  exportStampFile: () => {
+    const c = get().canvas;
+    if (!c) return null;
+    const name = downloadStampFile(
+      buildStampFile({
+        name: get().designName,
+        json: serialize(c),
+        ink: get().inkColor,
+        canvasColor: get().canvasColor,
+        company: get().company,
+      }),
+      get().designName
+    );
+    get().toast(`Exported ${name}`, "success");
+    return name;
+  },
+  importStampFile: async (file) => {
+    const c = get().canvas;
+    if (!c || !file) return;
+    const data = parseStampFile(await file.text());
+    history.lock();
+    await deserialize(c, data.json);
+    history.unlock();
+    if (data.ink) {
+      storage.setPrefs({ inkColor: data.ink });
+      set({ inkColor: data.ink });
+    }
+    if (data.canvasColor != null) get().setCanvasColor(data.canvasColor);
+    if (data.company) get().setCompany(data.company);
+    set({
+      currentDesignId: null,
+      designName: data.name || "Imported stamp",
+      selected: null,
+      dirty: true,
+    });
+    get().resetHistory();
+    get().touchLayers();
+    get().toast(`Imported "${data.name || file.name}"`, "success");
+  },
+  refreshFields: (opts) => {
+    const c = get().canvas;
+    if (!c) return;
+    if (refreshLiveFields(c, opts)) {
+      get().commit();
+      get().touchSelection();
+    }
   },
 
   clips: storage.getClips(),

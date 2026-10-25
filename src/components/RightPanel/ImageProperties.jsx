@@ -1,6 +1,7 @@
-import { FlipHorizontal, FlipVertical } from "lucide-react";
+import { FlipHorizontal, FlipVertical, Sparkles, Eraser } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
-import { applyStampFilter } from "../../utils/canvas";
+import { applyStampFilter, clearObjectClip, clipObjectToRing } from "../../utils/canvas";
+import { removeImageBackground, vectorizeImage } from "../../utils/image";
 import { Checkbox, Row, Slider } from "../ui";
 
 export default function ImageProperties({ obj }) {
@@ -60,6 +61,58 @@ export default function ImageProperties({ obj }) {
             Grayscale + high contrast + knock-out background for a clean rubber
             ink impression.
           </p>
+          <Checkbox
+            label="Clip to frame"
+            checked={!!meta.clippedToRing}
+            onChange={async (on) => {
+              try {
+                if (on) await clipObjectToRing(canvas, obj);
+                else clearObjectClip(canvas, obj);
+                commit();
+                touch();
+              } catch (e) {
+                toast(e.message, "info");
+              }
+            }}
+            hint="Fit the logo inside the outer ring."
+          />
+          <Row label="Logo">
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                className="btn text-[10px]"
+                onClick={async () => {
+                  try {
+                    await removeImageBackground(canvas, obj);
+                    commit();
+                    touch();
+                    toast("Background removed", "success");
+                  } catch (e) {
+                    toast(e.message, "error");
+                  }
+                }}
+              >
+                <Eraser size={12} aria-hidden /> Knock out
+              </button>
+              <button
+                type="button"
+                className="btn text-[10px]"
+                onClick={async () => {
+                  try {
+                    const ink = useStampStore.getState().inkColor;
+                    await vectorizeImage(canvas, obj, ink);
+                    commit();
+                    useStampStore.getState().syncSelection();
+                    toast("Converted to vector — recolor with Ink", "success");
+                  } catch (e) {
+                    toast(e.message, "error");
+                  }
+                }}
+              >
+                <Sparkles size={12} aria-hidden /> To SVG
+              </button>
+            </div>
+          </Row>
         </>
       )}
     </div>

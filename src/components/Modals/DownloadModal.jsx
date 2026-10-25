@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Download, FileImage, Layers, ShieldCheck, Sparkles, Check } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { doExportJPG, doExportPNG, doExportSVG } from "../../utils/actions";
+import { PRINT_BLEEDS, PRINT_DPI, PRINT_SIZES, printPixels } from "../../utils/print";
+import { Checkbox } from "../ui";
 import Modal from "./Modal";
 
 export default function DownloadModal() {
@@ -10,18 +12,31 @@ export default function DownloadModal() {
   const [scale, setScale] = useState(3); // 1x, 2x, 3x, 4x
   const [surface, setSurface] = useState("transparent"); // transparent | solid | trim
   const [downloaded, setDownloaded] = useState(false);
+  const [printMode, setPrintMode] = useState(true);
+  const [sizeMm, setSizeMm] = useState(38);
+  const [dpi, setDpi] = useState(300);
+  const [bleedMm, setBleedMm] = useState(1);
+  const [cmykSafe, setCmykSafe] = useState(true);
 
   const transparentOnly = surface === "transparent";
   const trim = surface === "trim";
+  const px = printPixels(sizeMm, dpi, bleedMm);
 
   const handleDownload = () => {
-    const opts = { transparentOnly, trim };
+    const opts = {
+      transparentOnly,
+      trim,
+      cmykSafe,
+      bumpSerial: true,
+      name: designName,
+      ...(printMode && format !== "svg" ? { sizeMm, dpi, bleedMm } : {}),
+    };
     if (format === "png") {
-      doExportPNG(scale, opts);
+      doExportPNG(printMode ? 1 : scale, opts);
     } else if (format === "jpg") {
-      doExportJPG(scale, { trim });
+      doExportJPG(printMode ? 1 : scale, { ...opts, transparentOnly: false });
     } else if (format === "svg") {
-      doExportSVG({ transparentOnly });
+      doExportSVG({ transparentOnly, cmykSafe, bumpSerial: true, name: designName });
     }
     setDownloaded(true);
     setTimeout(() => {
@@ -106,39 +121,90 @@ export default function DownloadModal() {
           </div>
         </div>
 
-        {/* Quality / Resolution Row (for PNG & JPG) */}
         {format !== "svg" && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="label font-bold text-xs text-[var(--text)]">
-                Resolution Size
-              </label>
-              <span className="text-[11px] font-mono text-[var(--accent)] font-semibold">
-                {scale * 600} × {scale * 600} px ({scale}x DPI)
-              </span>
+              <label className="label font-bold text-xs text-[var(--text)]">Print size</label>
+              <button
+                type="button"
+                className={`btn !min-h-6 !px-2 text-[10px] ${printMode ? "btn-on" : ""}`}
+                aria-pressed={printMode}
+                onClick={() => setPrintMode((v) => !v)}
+              >
+                {printMode ? "mm / dpi" : "px scale"}
+              </button>
             </div>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[
-                { s: 1, label: "1x", hint: "600px" },
-                { s: 2, label: "2x", hint: "1200px" },
-                { s: 3, label: "3x (HD)", hint: "1800px" },
-                { s: 4, label: "4x (Ultra)", hint: "2400px" },
-              ].map((item) => (
-                <button
-                  key={item.s}
-                  type="button"
-                  onClick={() => setScale(item.s)}
-                  className={`p-2 border rounded text-center transition-all ${
-                    scale === item.s
-                      ? "border-[var(--accent)] bg-[var(--accent-dim)] ring-1 ring-[var(--accent)]"
-                      : "border-[var(--border)] hover:bg-[var(--bg-raised)]"
-                  }`}
-                >
-                  <div className="text-xs font-bold text-[var(--text)]">{item.label}</div>
-                  <div className="text-[9px] text-[var(--text-dim)]">{item.hint}</div>
-                </button>
-              ))}
-            </div>
+            {printMode ? (
+              <>
+                <div className="grid grid-cols-3 gap-1.5 mb-1.5">
+                  {PRINT_SIZES.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSizeMm(s.mm)}
+                      className={`p-2 border rounded text-center ${
+                        sizeMm === s.mm
+                          ? "border-[var(--accent)] bg-[var(--accent-dim)]"
+                          : "border-[var(--border)]"
+                      }`}
+                    >
+                      <div className="text-xs font-bold">{s.label}</div>
+                      <div className="text-[9px]" style={{ color: "var(--text-dim)" }}>{s.hint}</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 mb-1.5">
+                  {PRINT_DPI.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDpi(d)}
+                      className={`btn ${dpi === d ? "btn-on" : ""}`}
+                    >
+                      {d} dpi
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {PRINT_BLEEDS.map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      onClick={() => setBleedMm(b)}
+                      className={`btn ${bleedMm === b ? "btn-on" : ""}`}
+                    >
+                      {b ? `${b} mm` : "No bleed"}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[10px] tabular-nums" style={{ color: "var(--text-dim)" }}>
+                  {px.total} × {px.total} px including bleed
+                </p>
+              </>
+            ) : (
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { s: 1, label: "1x", hint: "600px" },
+                  { s: 2, label: "2x", hint: "1200px" },
+                  { s: 3, label: "3x", hint: "1800px" },
+                  { s: 4, label: "4x", hint: "2400px" },
+                ].map((item) => (
+                  <button
+                    key={item.s}
+                    type="button"
+                    onClick={() => setScale(item.s)}
+                    className={`p-2 border rounded text-center ${
+                      scale === item.s
+                        ? "border-[var(--accent)] bg-[var(--accent-dim)]"
+                        : "border-[var(--border)]"
+                    }`}
+                  >
+                    <div className="text-xs font-bold">{item.label}</div>
+                    <div className="text-[9px]" style={{ color: "var(--text-dim)" }}>{item.hint}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -149,9 +215,9 @@ export default function DownloadModal() {
           </label>
           <div className="grid grid-cols-3 gap-1.5">
             {[
-              { id: "transparent", label: "Transparent", desc: "No background" },
-              { id: "solid", label: "Canvas Color", desc: "Paper background" },
-              { id: "trim", label: "Tight Trim", desc: "Cropped to ink" },
+              { id: "transparent", label: "Stamp only", desc: "No paper in file" },
+              { id: "solid", label: "Include paper", desc: "Keep canvas colour" },
+              { id: "trim", label: "Tight trim", desc: "Cropped to ink" },
             ].map((s) => (
               <button
                 key={s.id}
@@ -169,6 +235,13 @@ export default function DownloadModal() {
             ))}
           </div>
         </div>
+
+        <Checkbox
+          label="CMYK-safe ink"
+          checked={cmykSafe}
+          onChange={setCmykSafe}
+          hint="Maps screen RGB to printable CMYK-safe colours for this download only."
+        />
 
         {/* File Name Row */}
         <div>

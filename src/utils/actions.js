@@ -3,13 +3,17 @@ import useStampStore, { history } from "../store/useStampStore";
 import {
   CANVAS_SIZE,
   EXTRA_PROPS,
+  addImageFromFile,
+  applyStampFilter,
   applyTemplate,
+  clipObjectToRing,
   exportJPG,
   exportPNG,
   exportSVG,
   nextId,
 } from "./canvas";
 import { getTemplate } from "../templates";
+import { refreshLiveFields } from "./fields";
 
 const S = () => useStampStore.getState();
 const C = () => useStampStore.getState().canvas;
@@ -250,35 +254,73 @@ export function loadTemplate(idOrTemplate, { silent = false } = {}) {
   if (!silent) S().toast(`Template "${tpl.name}" applied`, "success");
 }
 
-export function doExportPNG(multiplier = 3, options = {}) {
+function exportLabel(options = {}) {
+  const bits = [];
+  if (options.sizeMm) bits.push(`${options.sizeMm} mm`);
+  if (options.dpi) bits.push(`${options.dpi} dpi`);
+  if (options.bleedMm) bits.push(`${options.bleedMm} mm bleed`);
+  if (options.cmykSafe) bits.push("CMYK-safe");
+  return bits.length ? ` (${bits.join(" · ")})` : "";
+}
+
+function prepareExport() {
+  const canvas = C();
+  if (!canvas) return null;
+  refreshLiveFields(canvas);
+  return canvas;
+}
+
+function afterExport(options = {}) {
+  if (!options.bumpSerial) return;
   const canvas = C();
   if (!canvas) return;
+  if (refreshLiveFields(canvas, { bumpSerial: true })) {
+    S().commit();
+    S().touchSelection();
+  }
+}
+
+export async function doExportPNG(multiplier = 3, options = {}) {
+  const canvas = prepareExport();
+  if (!canvas) return;
   try {
-    const name = exportPNG(canvas, multiplier, undefined, options);
-    const suffix = options.transparentOnly === false ? "" : " (Transparent)";
-    S().toast(`Exported ${name} @${multiplier}x${suffix}`, "success");
+    const name = await exportPNG(canvas, multiplier, undefined, {
+      ...options,
+      name: options.name || S().designName,
+    });
+    const suffix = options.transparentOnly === false ? "" : " transparent";
+    S().toast(`Exported ${name}${suffix}${exportLabel(options)}`, "success");
+    afterExport(options);
   } catch (e) {
     S().toast(`Export failed: ${e.message}`, "error");
   }
 }
 
 export function doExportSVG(options = {}) {
-  const canvas = C();
+  const canvas = prepareExport();
   if (!canvas) return;
   try {
-    const name = exportSVG(canvas, undefined, options);
-    S().toast(`Exported ${name} (SVG Vector)`, "success");
+    const name = exportSVG(canvas, undefined, {
+      ...options,
+      name: options.name || S().designName,
+    });
+    S().toast(`Exported ${name} (SVG)${exportLabel(options)}`, "success");
+    afterExport(options);
   } catch (e) {
     S().toast(`SVG export failed: ${e.message}`, "error");
   }
 }
 
-export function doExportJPG(multiplier = 3, options = {}) {
-  const canvas = C();
+export async function doExportJPG(multiplier = 3, options = {}) {
+  const canvas = prepareExport();
   if (!canvas) return;
   try {
-    const name = exportJPG(canvas, multiplier, undefined, options);
-    S().toast(`Exported ${name} @${multiplier}x`, "success");
+    const name = await exportJPG(canvas, multiplier, undefined, {
+      ...options,
+      name: options.name || S().designName,
+    });
+    S().toast(`Exported ${name}${exportLabel(options)}`, "success");
+    afterExport(options);
   } catch (e) {
     S().toast(`JPG export failed: ${e.message}`, "error");
   }
@@ -299,7 +341,7 @@ const fit = (text, base, min, max) => {
  * Builds a complete, balanced stamp from user text. Works in every
  * script — Arabic arcs stay joined via the shaping engine.
  */
-export function generateAutoStamp({ name, center, bottom, shape, ink, font }) {
+export async function generateAutoStamp({ name, center, bottom, shape, ink, font, logo }) {
   const canvas = C();
   if (!canvas) return;
   const CC = SIZE / 2;
@@ -337,6 +379,17 @@ export function generateAutoStamp({ name, center, bottom, shape, ink, font }) {
   history.lock();
   canvas.remove(...canvas.getObjects());
   specs.forEach((sp) => canvas.add(spec(sp)));
+  if (logo) {
+    try {
+      const blob = await (await fetch(logo)).blob();
+      const file = new File([blob], "logo.png", { type: blob.type || "image/png" });
+      const obj = await addImageFromFile(canvas, file);
+      if (obj.type === "image") await applyStampFilter(canvas, obj, true);
+      await clipObjectToRing(canvas, obj);
+    } catch {
+      /* logo optional */
+    }
+  }
   canvas.discardActiveObject();
   canvas.requestRenderAll();
   history.unlock();

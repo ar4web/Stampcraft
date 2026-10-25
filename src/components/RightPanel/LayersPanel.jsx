@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { selectionKind } from "../../utils/canvas";
+import { objectInkHex } from "../../utils/color";
 import { bringForward, sendBackwards } from "../../utils/actions";
 import { Empty } from "../ui";
 
@@ -119,8 +120,16 @@ export default function LayersPanel() {
                 opacity: obj.visible === false ? 0.45 : 1,
               }}
             >
-              <Icon size={14} style={{ color: "var(--text-dim)" }} className="shrink-0" />
-               <span className="min-w-0 flex-1 truncate text-[11px] font-medium">{obj.name || kind}</span>
+               <Icon size={14} style={{ color: objectInkHex(obj) || "var(--text-dim)" }} className="shrink-0" />
+                <span
+                  className="h-3 w-3 shrink-0 border"
+                  style={{
+                    background: objectInkHex(obj) || "transparent",
+                    borderColor: "var(--border-soft)",
+                  }}
+                  title={objectInkHex(obj) || "No fill"}
+                />
+                <span className="min-w-0 flex-1 truncate text-[11px] font-medium">{obj.name || kind}</span>
               <Mini
                 title="Move up"
                 onClick={() => {

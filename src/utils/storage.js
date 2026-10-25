@@ -12,6 +12,8 @@ const AUTOSAVE_KEY = "stamp_autosave";
 const THEME_KEY = "stamp_theme";
 const PREFS_KEY = "stamp_prefs";
 const CLIP_KEY = "stamp_clips";
+const PALETTE_KEY = "stamp_palettes";
+const COMPANY_KEY = "stamp_company";
 
 const memory = new Map();
 
@@ -168,6 +170,43 @@ export const resetPrefs = () => {
   }
   memory.delete(PREFS_KEY);
   memory.delete(THEME_KEY);
+};
+
+export const getPalettes = () => read(PALETTE_KEY, []);
+
+export function savePalette({ id, name, colors }) {
+  const palettes = getPalettes();
+  const now = Date.now();
+  const record = {
+    id: id || `p_${now}_${Math.random().toString(36).slice(2, 7)}`,
+    name: name || "Ink set",
+    colors: (colors || []).filter((c) => /^#([0-9a-f]{6})$/i.test(c)).slice(0, 8),
+    created: now,
+  };
+  palettes.unshift(record);
+  write(PALETTE_KEY, palettes.slice(0, 16));
+  return record;
+}
+
+export function deletePalette(id) {
+  write(
+    PALETTE_KEY,
+    getPalettes().filter((p) => p.id !== id)
+  );
+  return getPalettes();
+}
+
+export const getCompany = () =>
+  read(COMPANY_KEY, {
+    name: "",
+    legal: "",
+    logo: "",
+  });
+
+export const setCompany = (patch) => {
+  const next = { ...getCompany(), ...patch };
+  write(COMPANY_KEY, next);
+  return next;
 };
 
 export function storageStatus() {

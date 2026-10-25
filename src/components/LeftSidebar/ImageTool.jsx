@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
-import { addImageFromFile, applyStampFilter } from "../../utils/canvas";
+import { addImageFromFile, applyStampFilter, clipObjectToRing } from "../../utils/canvas";
+import { removeImageBackground } from "../../utils/image";
 import { Checkbox } from "../ui";
 
 export default function ImageTool() {
@@ -9,6 +10,9 @@ export default function ImageTool() {
   const [hover, setHover] = useState(false);
   const [loading, setLoading] = useState(false);
   const [autoFilter, setAutoFilter] = useState(true);
+  const [fitRing, setFitRing] = useState(true);
+  const [knockout, setKnockout] = useState(true);
+  const company = useStampStore((s) => s.company);
 
   const handleFiles = async (files) => {
     const store = useStampStore.getState();
@@ -21,8 +25,18 @@ export default function ImageTool() {
     setLoading(true);
     try {
       const obj = await addImageFromFile(store.canvas, file);
+      if (knockout && obj.type === "image") {
+        await removeImageBackground(store.canvas, obj);
+      }
       if (autoFilter && obj.type === "image") {
         await applyStampFilter(store.canvas, obj, true);
+      }
+      if (fitRing) {
+        try {
+          await clipObjectToRing(store.canvas, obj);
+        } catch (err) {
+          store.toast(err.message, "info");
+        }
       }
       store.commit();
       store.syncSelection();
@@ -78,10 +92,41 @@ export default function ImageTool() {
         }}
       />
 
+      {company?.logo ? (
+        <button
+          type="button"
+          className="btn w-full mb-3"
+          onClick={async () => {
+            const store = useStampStore.getState();
+            try {
+              const blob = await (await fetch(company.logo)).blob();
+              const file = new File([blob], "company-logo.png", { type: blob.type || "image/png" });
+              await handleFiles([file]);
+            } catch (e) {
+              store.toast(e.message, "error");
+            }
+          }}
+        >
+          Use company logo
+        </button>
+      ) : null}
+
       <Checkbox
         label="Auto stamp filter"
         checked={autoFilter}
         onChange={setAutoFilter}
+      />
+      <Checkbox
+        label="Remove background"
+        checked={knockout}
+        onChange={setKnockout}
+        hint="Knocks out the paper/white backdrop on import."
+      />
+      <Checkbox
+        label="Fit and clip to frame"
+        checked={fitRing}
+        onChange={setFitRing}
+        hint="Centers the logo in the outer ring and knocks out overflow."
       />
       <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-dim)" }}>
         The stamp filter converts bitmaps to grayscale, boosts contrast and knocks
