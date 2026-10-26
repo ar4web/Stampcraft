@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  BadgeCheck,
   Bookmark,
-  CalendarDays,
   ChevronLeft,
   Crosshair,
   Droplets,
@@ -25,20 +23,16 @@ import SurfaceTool from "./SurfaceTool";
 import TemplateGallery from "./TemplateGallery";
 import OrnamentTool from "./OrnamentTool";
 import BorderTool from "./BorderTool";
-import MarkTool from "./MarkTool";
 import AlignTool from "./AlignTool";
 import DistressTool from "./DistressTool";
 import ClipTool from "./ClipTool";
-import FieldTool from "./FieldTool";
 
 const SECTIONS = [
   { id: "template", label: "Templates", hint: "Start from a layout", icon: LayoutGrid, Component: TemplateGallery },
-  { id: "text", label: "Text", hint: "Straight or curved", icon: Type, Component: TextTool },
+  { id: "text", label: "Text", hint: "Words, marks, dates", icon: Type, Component: TextTool },
   { id: "border", label: "Frame", hint: "Outer stamp shape", icon: Scan, Component: BorderTool },
   { id: "ornament", label: "Ornaments", hint: "Stars, seals, flourishes", icon: Flower2, Component: OrnamentTool },
   { id: "image", label: "Logo", hint: "Drop, knock out, vectorize", icon: ImageIcon, Component: ImageTool },
-  { id: "mark", label: "Marks", hint: "APPROVED, PAID, COPY", icon: BadgeCheck, Component: MarkTool },
-  { id: "fields", label: "Date / No.", hint: "Live date, time, serial", icon: CalendarDays, Component: FieldTool },
   { id: "align", label: "Align", hint: "Centre and snap", icon: Crosshair, Component: AlignTool },
   { id: "distress", label: "Distress", hint: "Worn rubber ink", icon: Droplets, Component: DistressTool },
   { id: "clip", label: "Clips", hint: "Reuse motifs", icon: Bookmark, Component: ClipTool },
@@ -107,7 +101,7 @@ export default function LeftSidebar() {
                     : { borderBottomColor: "transparent" }
                 }
               >
-                <s.icon size={16} />
+                <s.icon size={16} strokeWidth={1.75} />
               </button>
             ))}
           </div>
@@ -142,30 +136,31 @@ export default function LeftSidebar() {
         }}
       >
         <div className="scroll-thin flex min-h-0 flex-1 flex-col overflow-y-auto">
-        {SECTIONS.map((s) => {
+        {SECTIONS.map((s, i) => {
           const on = active === s.id;
+          const prev = SECTIONS[i - 1];
           return (
-            <Tooltip label={s.label} hint={s.hint} side="right" key={s.id} className="w-full">
-              <button
-                key={s.id}
-                aria-selected={on && openPanel}
-                aria-expanded={on && openPanel}
-                aria-label={s.label}
-                title={s.label}
-                onClick={() => {
-                  if (active === s.id && openPanel) collapse();
-                  else {
-                    setActive(s.id);
-                    setPinned(true);
-                  }
-                }}
-                className={`rail-btn ${pulse && s.id === "template" ? "pulse-hint" : ""} ${
-                  s.id === "auto" ? "mt-2" : ""
-                }`}
-              >
-                <s.icon size={18} />
-              </button>
-            </Tooltip>
+            <div key={s.id} className="w-full">
+              {s.id === "auto" && prev?.id !== "auto" && <div className="rail-gap" />}
+              <Tooltip label={s.label} hint={s.hint} side="right" className="w-full">
+                <button
+                  aria-selected={on && openPanel}
+                  aria-expanded={on && openPanel}
+                  aria-label={s.label}
+                  title={s.label}
+                  onClick={() => {
+                    if (active === s.id && openPanel) collapse();
+                    else {
+                      setActive(s.id);
+                      setPinned(true);
+                    }
+                  }}
+                  className={`rail-btn ${pulse && s.id === "template" ? "pulse-hint" : ""}`}
+                >
+                  <s.icon size={18} strokeWidth={1.75} />
+                </button>
+              </Tooltip>
+            </div>
           );
         })}
         </div>
@@ -197,11 +192,11 @@ export default function LeftSidebar() {
       >
         <div className="flex h-full w-[268px] flex-col">
           <div
-            className="flex h-10 shrink-0 items-center gap-2 border-b px-2.5"
+            className="flex h-11 shrink-0 items-center gap-2 border-b px-3"
             style={{ borderColor: "var(--border-soft)", background: "var(--bg-raised)" }}
           >
-            <GripVertical size={14} style={{ color: "var(--text-dim)" }} aria-hidden />
-            <h2 className="flex-1 truncate text-[10px] font-semibold uppercase tracking-[0.08em]">
+            <GripVertical size={14} style={{ color: "var(--text-mute)" }} aria-hidden />
+            <h2 className="flex-1 truncate text-[11px] font-semibold uppercase tracking-[0.1em]">
               {SECTIONS.find((s) => s.id === active)?.label}
             </h2>
             <button
@@ -213,7 +208,7 @@ export default function LeftSidebar() {
               <ChevronLeft size={15} />
             </button>
           </div>
-          <div className="scroll-thin flex-1 overflow-y-auto p-3.5">
+          <div className="scroll-thin flex-1 overflow-y-auto px-3 py-2">
             <Current />
           </div>
         </div>

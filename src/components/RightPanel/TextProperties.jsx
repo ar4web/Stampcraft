@@ -20,6 +20,7 @@ import { isRTL } from "../../utils/arabic";
 import { FONT_SETS, getCustomFonts, importFontFile, loadFont } from "../../utils/fonts";
 import { Row, Slider } from "../ui";
 import Tooltip from "../Tooltip";
+import FontPicker from "../FontPicker";
 import TransformBlock from "./TransformBlock";
 
 const WEIGHTS = [
@@ -375,75 +376,55 @@ export default function TextProperties({ obj, kind }) {
         </Row>
       )}
 
-      <div className="pair-row">
-        <div>
-          <span className="label mb-1 block">Typeface</span>
-          <div className="flex gap-1.5">
-            <select
-              className="field"
-              aria-label="Font family"
-              value={family}
-              onChange={(e) => setFont(e.target.value)}
-              style={{ fontFamily: family }}
+      <Row
+        label="Typeface"
+        hint={
+          <Tooltip label="Upload font" hint="TTF / OTF / WOFF" side="top">
+            <button
+              type="button"
+              className="btn btn-icon !h-6 !w-6 !min-h-6 !min-w-6"
+              aria-label="Import font file"
+              onClick={() => fontFileRef.current?.click()}
             >
-              {custom.length > 0 && (
-                <optgroup label="My Uploaded Fonts">
-                  {custom.map((f) => (
-                    <option key={f} value={f} style={{ fontFamily: f }}>
-                      {f}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {FONT_SETS.map((g) => (
-                <optgroup key={g.script} label={g.script}>
-                  {g.fonts.map((f) => (
-                    <option key={f} value={f} style={{ fontFamily: f }}>
-                      {f}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            <Tooltip label="Upload font" hint="TTF / OTF / WOFF" side="top">
-              <button
-                type="button"
-                className="btn btn-icon shrink-0"
-                aria-label="Import font file"
-                onClick={() => fontFileRef.current?.click()}
-              >
-                <Upload size={15} />
-              </button>
-            </Tooltip>
-          </div>
-          <input
-            ref={fontFileRef}
-            type="file"
-            accept=".ttf,.otf,.woff,.woff2,font/*"
-            className="hidden"
-            onChange={(e) => {
-              onImportFont(e.target.files);
-              e.target.value = "";
-            }}
-          />
+              <Upload size={12} />
+            </button>
+          </Tooltip>
+        }
+      >
+        <input
+          ref={fontFileRef}
+          type="file"
+          accept=".ttf,.otf,.woff,.woff2,font/*"
+          className="hidden"
+          onChange={(e) => {
+            onImportFont(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <FontPicker
+          fonts={[...custom, ...FONT_SETS.flatMap((g) => g.fonts)]}
+          value={family}
+          onSelect={setFont}
+          grouped
+        />
+      </Row>
+
+      <Row label="Weight">
+        <div className="weight-grid cols-4">
+          {WEIGHTS.map((w) => (
+            <button
+              key={w.v}
+              type="button"
+              className={`btn text-[10px] ${weight === w.v ? "btn-on" : ""}`}
+              aria-pressed={weight === w.v}
+              style={{ fontFamily: family, fontWeight: w.v }}
+              onClick={() => update({ fontWeight: w.v })}
+            >
+              {w.label.replace(/ \d+$/, "")}
+            </button>
+          ))}
         </div>
-        <div>
-          <span className="label mb-1 block">Weight</span>
-          <select
-            className="field"
-            aria-label="Font weight"
-            value={weight}
-            onChange={(e) => update({ fontWeight: e.target.value })}
-            style={{ fontFamily: family, fontWeight: weight }}
-          >
-            {WEIGHTS.map((w) => (
-              <option key={w.v} value={w.v}>
-                {w.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      </Row>
 
       <Slider
         label="Size"

@@ -15,6 +15,11 @@ import paidStamp from "./paidStamp.js";
 import hexagonBadge from "./hexagonBadge.js";
 import logoRound from "./logoRound.js";
 import logoBadge from "./logoBadge.js";
+import riyadhSeal from "./riyadhSeal.js";
+import saudiSeal from "./saudiSeal.js";
+import postalStamp from "./postalStamp.js";
+import crStamp from "./crStamp.js";
+import jeddahStamp from "./jeddahStamp.js";
 
 // Ordered: single ring first, then double, triple, square, the rest.
 const annotate = (tpl, cat, order) => ({ ...tpl, cat: tpl.cat || cat, order: tpl.order ?? order });
@@ -37,9 +42,14 @@ export const TEMPLATES = [
   annotate(hexagonBadge, "Oval & Badge", 22),
   annotate(logoRound, "Logo", 30),
   annotate(logoBadge, "Logo", 31),
+  annotate(riyadhSeal, "Arabic", 40),
+  annotate(saudiSeal, "Arabic", 41),
+  annotate(postalStamp, "Arabic", 42),
+  annotate(crStamp, "Arabic", 43),
+  annotate(jeddahStamp, "Arabic", 44),
 ].sort((a, b) => a.order - b.order);
 
-export const TEMPLATE_CATEGORIES = ["Round", "Square & Rect", "Oval & Badge", "Logo"];
+export const TEMPLATE_CATEGORIES = ["Round", "Square & Rect", "Oval & Badge", "Logo", "Arabic"];
 
 export const getTemplate = (id) => TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
 

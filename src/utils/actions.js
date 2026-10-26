@@ -13,7 +13,7 @@ import {
   nextId,
 } from "./canvas";
 import { getTemplate } from "../templates";
-import { refreshLiveFields } from "./fields";
+import { fieldText, refreshLiveFields } from "./fields";
 
 const S = () => useStampStore.getState();
 const C = () => useStampStore.getState().canvas;
@@ -397,4 +397,184 @@ export async function generateAutoStamp({ name, center, bottom, shape, ink, font
   S().syncSelection();
   S().setDesignName(name || center || "Generated stamp");
   S().toast("Stamp generated — every layer stays editable", "success");
+}
+
+export function stampLookSpecs(text, look, ink, font) {
+  const CC = SIZE / 2;
+  const word = String(text || "TEXT").trim() || "TEXT";
+  const ar = /[\u0600-\u06FF]/.test(word);
+  const fam = font || (ar ? "Cairo" : "Oswald");
+  const size = fit(word, 380, 22, 56);
+  const gap = ar ? 0 : 40;
+
+  if (look === "rect") {
+    return [
+      { type: "rect", w: 500, h: 220, rx: 6, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Frame" },
+      { type: "text", text: word, fontSize: size, fontFamily: fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 440, charSpacing: gap, name: word },
+    ];
+  }
+  if (look === "square") {
+    return [
+      { type: "rect", w: 420, h: 420, rx: 8, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Frame" },
+      { type: "text", text: word, fontSize: Math.min(size, 48), fontFamily: fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 340, charSpacing: gap, name: word },
+    ];
+  }
+  if (look === "oval") {
+    return [
+      { type: "ellipse", rx: 250, ry: 160, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Oval" },
+      { type: "text", text: word, fontSize: Math.min(size, 44), fontFamily: fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 400, charSpacing: gap, name: word },
+    ];
+  }
+  if (look === "bilingual") {
+    const en = ar ? "SAUDI ARABIA" : word;
+    const arWord = ar ? word : "المملكة العربية السعودية";
+    return [
+      { type: "circle", r: 250, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Outer" },
+      { type: "circle", r: 228, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "arc", text: arWord, radius: 196, position: "top", fontSize: 26, fontFamily: "Cairo", fontWeight: "700", fill: ink, letterSpacing: 1, cx: CC, cy: CC, name: "Top" },
+      { type: "arc", text: en, radius: 196, position: "bottom", fontSize: 16, fontFamily: "Oswald", fontWeight: "700", fill: ink, letterSpacing: 2, cx: CC, cy: CC, name: "Bottom" },
+      { type: "text", text: word, fontSize: 40, fontFamily: ar ? "Amiri" : fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 300, charSpacing: gap, name: "Centre" },
+    ];
+  }
+  if (look === "round-center") {
+    return [
+      { type: "circle", r: 250, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Outer" },
+      { type: "circle", r: 228, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "text", text: word, fontSize: size, fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC, w: 360, charSpacing: gap, name: word },
+    ];
+  }
+  return [
+    { type: "circle", r: 250, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Outer" },
+    { type: "circle", r: 228, cx: CC, cy: CC, stroke: ink, strokeWidth: 2.5, name: "Inner" },
+    { type: "arc", text: word, radius: 198, position: "top", fontSize: Math.min(size, 34), fontFamily: fam, fontWeight: "700", fill: ink, letterSpacing: ar ? 1 : 3, cx: CC, cy: CC, name: "Arc" },
+    { type: "text", text: ar ? "KSA" : "STAMP", fontSize: 36, fontFamily: "Oswald", fontWeight: "900", fill: ink, cx: CC, cy: CC, w: 280, charSpacing: 40, name: "Centre" },
+  ];
+}
+
+function paintSpecs(specs, name, msg) {
+  const canvas = C();
+  if (!canvas) return;
+  history.lock();
+  canvas.remove(...canvas.getObjects());
+  specs.forEach((sp) => canvas.add(spec(sp)));
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+  history.unlock();
+  S().commit();
+  S().syncSelection();
+  S().setDesignName(name);
+  if (msg) S().toast(msg, "success");
+}
+
+export function applyStampLook(text, look, ink, font) {
+  paintSpecs(stampLookSpecs(text, look, ink, font), text || "Stamp", "Look applied — every layer stays editable");
+}
+
+export function markLookSpecs(text, look, ink, font) {
+  const CC = SIZE / 2;
+  const raw = String(text || "MARK").trim() || "MARK";
+  const ar = /[\u0600-\u06FF]/.test(raw);
+  const word = ar ? raw : raw.toUpperCase();
+  const fam = font || (ar ? "Cairo" : "Oswald");
+  const size = fit(word, 520, 36, 88);
+  const gap = ar ? 0 : Math.max(8, Math.round(80 / Math.max(4, word.length)));
+  const date = "DATE  ___ / ___ / ______";
+
+  if (look === "round") {
+    return [
+      { type: "circle", r: 248, cx: CC, cy: CC, stroke: ink, strokeWidth: 10, name: "Ring" },
+      { type: "circle", r: 226, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "text", text: word, fontSize: size, fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC - 8, w: 400, charSpacing: gap, name: word },
+    ];
+  }
+  if (look === "oval") {
+    return [
+      { type: "ellipse", rx: 258, ry: 168, cx: CC, cy: CC, stroke: ink, strokeWidth: 9, name: "Oval" },
+      { type: "ellipse", rx: 240, ry: 150, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "text", text: word, fontSize: Math.min(size, 78), fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC - 8, w: 440, charSpacing: gap, name: word },
+    ];
+  }
+  if (look === "rect") {
+    return [
+      { type: "rect", w: 520, h: 210, rx: 4, cx: CC, cy: CC, stroke: ink, strokeWidth: 10, name: "Frame" },
+      { type: "rect", w: 494, h: 184, rx: 2, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "text", text: word, fontSize: Math.min(size, 64), fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC, w: 460, charSpacing: gap, name: word },
+    ];
+  }
+  if (look === "dated") {
+    const live = fieldText({ field: "date", dateFormat: "DD MMM YYYY" }) || date;
+    return [
+      { type: "circle", r: 248, cx: CC, cy: CC, stroke: ink, strokeWidth: 10, name: "Ring" },
+      { type: "text", text: word, fontSize: Math.min(size, 68), fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC - 28, w: 420, charSpacing: gap, name: word },
+      { type: "line", x1: CC - 150, y1: CC + 28, x2: CC + 150, y2: CC + 28, stroke: ink, strokeWidth: 4, name: "Rule" },
+      { type: "text", text: live, fontSize: 20, fontFamily: "Roboto Mono", fontWeight: "400", fill: ink, cx: CC, cy: CC + 68, w: 400, charSpacing: 0, name: "Date", field: "date", dateFormat: "DD MMM YYYY" },
+    ];
+  }
+  if (look === "banner") {
+    return [
+      { type: "rect", w: 520, h: 200, rx: 4, cx: CC, cy: CC, stroke: ink, strokeWidth: 10, name: "Frame" },
+      { type: "rect", w: 540, h: 14, cx: CC, cy: CC - 86, angle: -6, fill: ink, stroke: ink, strokeWidth: 0, opacity: 0.85, name: "Ink strip" },
+      { type: "rect", w: 540, h: 14, cx: CC, cy: CC + 86, angle: -6, fill: ink, stroke: ink, strokeWidth: 0, opacity: 0.85, name: "Ink strip" },
+      { type: "text", text: word, fontSize: Math.min(size, 58), fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC, w: 460, charSpacing: gap, angle: -6, name: word },
+    ];
+  }
+  return [
+    { type: "ellipse", rx: 250, ry: 150, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, angle: -16, name: "Frame" },
+    { type: "text", text: word, fontSize: Math.min(size, 72), fontFamily: fam, fontWeight: "900", fill: ink, cx: CC, cy: CC, w: 420, charSpacing: gap, angle: -16, name: word },
+  ];
+}
+
+export function applyMarkLook(text, look, ink, font) {
+  const word = String(text || "MARK").trim() || "MARK";
+  paintSpecs(markLookSpecs(word, look, ink, font), word, `${word.toUpperCase()} stamp applied`);
+}
+
+export function fieldLookSpecs(kind, look, ink, format) {
+  const CC = SIZE / 2;
+  const meta = {
+    field: kind,
+    dateFormat: format || "DD MMM YYYY",
+    serialPrefix: "NO. ",
+    serialValue: 1,
+    serialPad: 4,
+  };
+  const word = fieldText(meta) || "DATE";
+  const fam = "Roboto Mono";
+  const size = fit(word, 420, 28, 56);
+  const label = kind === "serial" ? "SERIAL" : kind === "time" ? "TIME" : kind === "datetime" ? "DATE TIME" : "DATE";
+
+  const live = {
+    field: kind,
+    dateFormat: meta.dateFormat,
+    serialPrefix: meta.serialPrefix,
+    serialValue: meta.serialValue,
+    serialPad: meta.serialPad,
+  };
+
+  if (look === "round") {
+    return [
+      { type: "circle", r: 248, cx: CC, cy: CC, stroke: ink, strokeWidth: 10, name: "Ring" },
+      { type: "circle", r: 226, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "arc", text: label, radius: 196, position: "top", fontSize: 22, fontFamily: "Oswald", fontWeight: "700", fill: ink, letterSpacing: 6, cx: CC, cy: CC, name: "Label" },
+      { type: "text", text: word, fontSize: size, fontFamily: fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 360, charSpacing: 8, name: word, ...live },
+    ];
+  }
+  if (look === "oval") {
+    return [
+      { type: "ellipse", rx: 258, ry: 160, cx: CC, cy: CC, stroke: ink, strokeWidth: 9, name: "Oval" },
+      { type: "ellipse", rx: 240, ry: 142, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+      { type: "text", text: word, fontSize: Math.min(size, 44), fontFamily: fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 420, charSpacing: 8, name: word, ...live },
+    ];
+  }
+  return [
+    { type: "rect", w: 500, h: 180, rx: 4, cx: CC, cy: CC, stroke: ink, strokeWidth: 8, name: "Frame" },
+    { type: "rect", w: 476, h: 156, rx: 2, cx: CC, cy: CC, stroke: ink, strokeWidth: 2, name: "Inner" },
+    { type: "text", text: word, fontSize: Math.min(size, 40), fontFamily: fam, fontWeight: "700", fill: ink, cx: CC, cy: CC, w: 440, charSpacing: 8, name: word, ...live },
+  ];
+}
+
+export function applyFieldLook(kind, look, ink, format) {
+  const specs = fieldLookSpecs(kind, look, ink, format);
+  const name = kind === "serial" ? "Serial" : kind === "time" ? "Time" : "Date";
+  paintSpecs(specs, name, `Live ${name.toLowerCase()} stamp applied`);
 }

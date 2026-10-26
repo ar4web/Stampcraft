@@ -1,0 +1,51 @@
+const C = 310;
+const INK = "#8b0000";
+
+export default {
+  id: "crStamp",
+  name: "C.R. / س.ت",
+  cat: "Arabic",
+  order: 43,
+  tags: ["arabic", "register", "cr"],
+  build: () => [
+    { type: "rect", w: 500, h: 220, rx: 6, cx: C, cy: C, stroke: INK, strokeWidth: 8, name: "Border" },
+    {
+      type: "text",
+      text: "سجل تجاري",
+      fontSize: 28,
+      fontFamily: "Cairo",
+      fontWeight: "700",
+      fill: INK,
+      charSpacing: 0,
+      cx: C,
+      cy: C - 58,
+      w: 440,
+      name: "CR AR",
+    },
+    {
+      type: "text",
+      text: "C.R. NO.",
+      fontSize: 22,
+      fontFamily: "Oswald",
+      fontWeight: "700",
+      fill: INK,
+      charSpacing: 80,
+      cx: C,
+      cy: C - 12,
+      w: 440,
+      name: "CR EN",
+    },
+    {
+      type: "text",
+      text: "____________",
+      fontSize: 28,
+      fontFamily: "Roboto Mono",
+      fontWeight: "400",
+      fill: INK,
+      cx: C,
+      cy: C + 48,
+      w: 440,
+      name: "Number line",
+    },
+  ],
+};
