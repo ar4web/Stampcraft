@@ -1,4 +1,6 @@
-# Stampcraft — Rubber Stamp Maker
+# E-Stamp - Rubber Stamp Maker
+
+https://ar4web.github.io/estamp/
 
 A 100% client-side rubber stamp designer. No backend, no database, no API keys —
 everything (fonts, canvas, storage, export) runs in the browser and deploys as
