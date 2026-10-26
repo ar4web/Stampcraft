@@ -15,6 +15,8 @@ import {
 } from "fabric";
 import { distressCanvasElement, stampifyCanvasElement } from "./texture";
 import { isRTL, toVisualClusters } from "./arabic";
+import { fieldText } from "./fields";
+import { printPixels, slugName, withCmykSafe } from "./print";
 
 export const CANVAS_SIZE = 620;
 export const SNAP_TOLERANCE = 10;
@@ -406,6 +408,18 @@ export function createSpecObject(spec) {
   if (!obj.id) obj.id = nextId();
   obj.name = s.name || defaultName(s.type, s.text);
   if (!obj.stampMeta) obj.stampMeta = { kind: s.type === "arc" ? "arc" : s.type };
+  if (s.field) {
+    obj.stampMeta = {
+      ...obj.stampMeta,
+      field: s.field,
+      dateFormat: s.dateFormat || "DD MMM YYYY",
+      serialPrefix: s.serialPrefix ?? "NO. ",
+      serialValue: s.serialValue ?? 1,
+      serialPad: s.serialPad ?? 4,
+    };
+    const live = fieldText(obj.stampMeta);
+    if (live && obj.set) obj.set({ text: live });
+  }
   if (s.locked) {
     obj.lockedLayer = true;
     obj.selectable = false;
@@ -543,35 +557,73 @@ function withNeutralViewport(canvas, fn, { transparentOnly = true } = {}) {
   }
 }
 
-function rasterExport(canvas, format, multiplier, filename, options = {}) {
+function padBleedDataUrl(dataUrl, art, bleed, format, quality, background) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = art + bleed * 2;
+      c.height = art + bleed * 2;
+      const ctx = c.getContext("2d");
+      if (format === "jpeg" || background) {
+        ctx.fillStyle = background || "#ffffff";
+        ctx.fillRect(0, 0, c.width, c.height);
+      }
+      ctx.drawImage(img, bleed, bleed, art, art);
+      const mime = format === "jpeg" ? "image/jpeg" : "image/png";
+      resolve(c.toDataURL(mime, quality));
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+async function rasterExport(canvas, format, multiplier, filename, options = {}) {
   const transparentOnly = format === "jpeg" ? false : options.transparentOnly !== false;
   const trim = options.trim === true;
   const quality = options.quality ?? 0.92;
   const ext = format === "jpeg" ? "jpg" : format;
+  const print = options.sizeMm && options.dpi
+    ? printPixels(options.sizeMm, options.dpi, options.bleedMm || 0)
+    : null;
+  const mult = print ? print.art / CANVAS_SIZE : multiplier;
 
-  const url = withNeutralViewport(
-    canvas,
-    () => {
-      const exportOpts = {
-        format,
-        multiplier,
-        enableRetinaScaling: false,
-        quality,
-      };
-      if (trim) {
-        const bounds = getStampBounds(canvas);
-        if (bounds) {
-          exportOpts.left = bounds.left;
-          exportOpts.top = bounds.top;
-          exportOpts.width = bounds.width;
-          exportOpts.height = bounds.height;
+  const render = () =>
+    withNeutralViewport(
+      canvas,
+      () => {
+        const exportOpts = {
+          format,
+          multiplier: mult,
+          enableRetinaScaling: false,
+          quality,
+        };
+        if (trim) {
+          const bounds = getStampBounds(canvas);
+          if (bounds) {
+            exportOpts.left = bounds.left;
+            exportOpts.top = bounds.top;
+            exportOpts.width = bounds.width;
+            exportOpts.height = bounds.height;
+          }
         }
-      }
-      return canvas.toDataURL(exportOpts);
-    },
-    { transparentOnly }
-  );
-  const name = filename || `stamp-${Date.now()}.${ext}`;
+        return canvas.toDataURL(exportOpts);
+      },
+      { transparentOnly }
+    );
+
+  let url = options.cmykSafe ? withCmykSafe(canvas, render) : render();
+  if (print && print.bleed > 0) {
+    url = await padBleedDataUrl(
+      url,
+      print.art,
+      print.bleed,
+      format,
+      quality,
+      transparentOnly ? null : canvas.backgroundColor || "#ffffff"
+    );
+  }
+  const name = filename || slugName(options.name || `stamp-${Date.now()}`, ext);
   downloadURL(url, name);
   return name;
 }
@@ -586,15 +638,17 @@ export function exportJPG(canvas, multiplier = 3, filename, options = {}) {
 
 export function exportSVG(canvas, filename, options = {}) {
   const transparentOnly = options.transparentOnly !== false;
-  const svg = withNeutralViewport(
-    canvas,
-    () => canvas.toSVG({ suppressPreamble: false }),
-    { transparentOnly }
-  );
+  const render = () =>
+    withNeutralViewport(
+      canvas,
+      () => canvas.toSVG({ suppressPreamble: false }),
+      { transparentOnly }
+    );
+  const svg = options.cmykSafe ? withCmykSafe(canvas, render) : render();
   const url = URL.createObjectURL(
     new Blob([svg], { type: "image/svg+xml;charset=utf-8" })
   );
-  const name = filename || `stamp-${Date.now()}.svg`;
+  const name = filename || slugName(options.name || `stamp-${Date.now()}`, "svg");
   downloadURL(url, name);
   setTimeout(() => URL.revokeObjectURL(url), 2000);
   return name;
@@ -623,6 +677,8 @@ export async function deserialize(canvas, json) {
       o.selectable = false;
       o.evented = false;
     }
+    const live = fieldText(o.stampMeta);
+    if (live && ["textbox", "i-text", "text"].includes(o.type)) o.set({ text: live });
   });
   canvas.requestRenderAll();
 }
@@ -656,6 +712,70 @@ export async function addImageFromFile(canvas, file, opts = {}) {
   obj.stampMeta = { kind: "image", src: isSVG ? "svg" : "raster" };
   canvas.add(obj);
   canvas.setActiveObject(obj);
+  canvas.requestRenderAll();
+  return obj;
+}
+
+export function findRingShape(canvas, exclude) {
+  const ranks = { circle: 4, ellipse: 3, rect: 2, polygon: 1 };
+  const shapes = canvas.getObjects().filter((o) => {
+    if (!o || o === exclude || o.visible === false) return false;
+    return ranks[o.type] > 0;
+  });
+  if (!shapes.length) return null;
+  return shapes.sort((a, b) => {
+    const ba = a.getBoundingRect();
+    const bb = b.getBoundingRect();
+    const areaA = ba.width * ba.height;
+    const areaB = bb.width * bb.height;
+    if (areaB !== areaA) return areaB - areaA;
+    return (ranks[b.type] || 0) - (ranks[a.type] || 0);
+  })[0];
+}
+
+export function fitObjectInRing(canvas, obj, padExtra = 12) {
+  const ring = findRingShape(canvas, obj);
+  if (!ring || !obj) throw new Error("Add a frame first, then drop the logo");
+  const b = ring.getBoundingRect(true);
+  const pad = Math.max(ring.strokeWidth || 0, padExtra);
+  const maxW = Math.max(24, b.width - pad * 2);
+  const maxH = Math.max(24, b.height - pad * 2);
+  const w = Math.max(1, obj.width || 1);
+  const h = Math.max(1, obj.height || 1);
+  const scale = Math.min(maxW / w, maxH / h);
+  obj.set({
+    originX: "center",
+    originY: "center",
+    left: b.left + b.width / 2,
+    top: b.top + b.height / 2,
+    scaleX: scale,
+    scaleY: scale,
+  });
+  obj.setCoords();
+  canvas.requestRenderAll();
+  return ring;
+}
+
+export async function clipObjectToRing(canvas, obj) {
+  const ring = fitObjectInRing(canvas, obj);
+  const clip = await ring.clone();
+  clip.set({
+    absolutePositioned: true,
+    fill: "#000000",
+    stroke: null,
+    strokeWidth: 0,
+    opacity: 1,
+  });
+  obj.set({ clipPath: clip });
+  obj.stampMeta = { ...(obj.stampMeta || {}), clippedToRing: true };
+  canvas.requestRenderAll();
+  return obj;
+}
+
+export function clearObjectClip(canvas, obj) {
+  if (!obj) return obj;
+  obj.set({ clipPath: undefined });
+  if (obj.stampMeta) obj.stampMeta = { ...obj.stampMeta, clippedToRing: false };
   canvas.requestRenderAll();
   return obj;
 }

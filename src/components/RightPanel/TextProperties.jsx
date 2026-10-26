@@ -15,10 +15,12 @@ import {
 } from "lucide-react";
 import useStampStore from "../../store/useStampStore";
 import { rebuildArc, toggleTextCurve } from "../../utils/canvas";
+import { DATE_FORMATS, fieldText } from "../../utils/fields";
 import { isRTL } from "../../utils/arabic";
 import { FONT_SETS, getCustomFonts, importFontFile, loadFont } from "../../utils/fonts";
 import { Row, Slider } from "../ui";
 import Tooltip from "../Tooltip";
+import FontPicker from "../FontPicker";
 import TransformBlock from "./TransformBlock";
 
 const WEIGHTS = [
@@ -132,6 +134,120 @@ export default function TextProperties({ obj, kind }) {
 
   return (
     <div className="space-y-3">
+      {!meta.field && !isArc && (
+        <Row label="Live field">
+          <div className="grid grid-cols-2 gap-1">
+            {["date", "time", "serial", "datetime"].map((id) => (
+              <button
+                key={id}
+                type="button"
+                className="btn text-[10px]"
+                onClick={() => {
+                  const next = {
+                    ...(obj.stampMeta || {}),
+                    kind: "text",
+                    field: id,
+                    dateFormat: "DD MMM YYYY",
+                    serialPrefix: "NO. ",
+                    serialValue: 1,
+                    serialPad: 4,
+                  };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) });
+                }}
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+        </Row>
+      )}
+
+      {meta.field && (
+        <Row label="Live field" hint={meta.field}>
+          <div className="grid grid-cols-2 gap-1 mb-1.5">
+            {["date", "time", "datetime", "serial"].map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`btn text-[10px] ${meta.field === id ? "btn-on" : ""}`}
+                onClick={() => {
+                  const next = { ...meta, field: id };
+                  if (id === "serial") {
+                    next.serialPrefix = next.serialPrefix ?? "NO. ";
+                    next.serialValue = next.serialValue ?? 1;
+                    next.serialPad = next.serialPad ?? 4;
+                  }
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) });
+                }}
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+          {(meta.field === "date" || meta.field === "datetime") && (
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {DATE_FORMATS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={`btn !min-h-6 !px-1.5 text-[9px] ${meta.dateFormat === f.id ? "btn-on" : ""}`}
+                  onClick={() => {
+                    const next = { ...meta, dateFormat: f.id };
+                    obj.stampMeta = next;
+                    update({ text: fieldText(next) });
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {meta.field === "serial" && (
+            <div className="grid grid-cols-3 gap-1">
+              <input
+                className="field"
+                aria-label="Serial prefix"
+                value={meta.serialPrefix ?? "NO. "}
+                onChange={(e) => {
+                  const next = { ...meta, serialPrefix: e.target.value };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) }, { silent: true });
+                }}
+                onBlur={() => commit()}
+              />
+              <input
+                className="field"
+                type="number"
+                aria-label="Serial value"
+                value={meta.serialValue ?? 1}
+                onChange={(e) => {
+                  const next = { ...meta, serialValue: Number(e.target.value) || 1 };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) }, { silent: true });
+                }}
+                onBlur={() => commit()}
+              />
+              <input
+                className="field"
+                type="number"
+                aria-label="Serial digits"
+                value={meta.serialPad ?? 4}
+                min={1}
+                max={8}
+                onChange={(e) => {
+                  const next = { ...meta, serialPad: Number(e.target.value) || 4 };
+                  obj.stampMeta = next;
+                  update({ text: fieldText(next) }, { silent: true });
+                }}
+                onBlur={() => commit()}
+              />
+            </div>
+          )}
+        </Row>
+      )}
+
       <Row label="Content">
         <textarea
           className="field resize-none"
@@ -260,75 +376,55 @@ export default function TextProperties({ obj, kind }) {
         </Row>
       )}
 
-      <div className="pair-row">
-        <div>
-          <span className="label mb-1 block">Typeface</span>
-          <div className="flex gap-1.5">
-            <select
-              className="field"
-              aria-label="Font family"
-              value={family}
-              onChange={(e) => setFont(e.target.value)}
-              style={{ fontFamily: family }}
+      <Row
+        label="Typeface"
+        hint={
+          <Tooltip label="Upload font" hint="TTF / OTF / WOFF" side="top">
+            <button
+              type="button"
+              className="btn btn-icon !h-6 !w-6 !min-h-6 !min-w-6"
+              aria-label="Import font file"
+              onClick={() => fontFileRef.current?.click()}
             >
-              {custom.length > 0 && (
-                <optgroup label="My Uploaded Fonts">
-                  {custom.map((f) => (
-                    <option key={f} value={f} style={{ fontFamily: f }}>
-                      {f}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-              {FONT_SETS.map((g) => (
-                <optgroup key={g.script} label={g.script}>
-                  {g.fonts.map((f) => (
-                    <option key={f} value={f} style={{ fontFamily: f }}>
-                      {f}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            <Tooltip label="Upload font" hint="TTF / OTF / WOFF" side="top">
-              <button
-                type="button"
-                className="btn btn-icon shrink-0"
-                aria-label="Import font file"
-                onClick={() => fontFileRef.current?.click()}
-              >
-                <Upload size={15} />
-              </button>
-            </Tooltip>
-          </div>
-          <input
-            ref={fontFileRef}
-            type="file"
-            accept=".ttf,.otf,.woff,.woff2,font/*"
-            className="hidden"
-            onChange={(e) => {
-              onImportFont(e.target.files);
-              e.target.value = "";
-            }}
-          />
+              <Upload size={12} />
+            </button>
+          </Tooltip>
+        }
+      >
+        <input
+          ref={fontFileRef}
+          type="file"
+          accept=".ttf,.otf,.woff,.woff2,font/*"
+          className="hidden"
+          onChange={(e) => {
+            onImportFont(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <FontPicker
+          fonts={[...custom, ...FONT_SETS.flatMap((g) => g.fonts)]}
+          value={family}
+          onSelect={setFont}
+          grouped
+        />
+      </Row>
+
+      <Row label="Weight">
+        <div className="weight-grid cols-4">
+          {WEIGHTS.map((w) => (
+            <button
+              key={w.v}
+              type="button"
+              className={`btn text-[10px] ${weight === w.v ? "btn-on" : ""}`}
+              aria-pressed={weight === w.v}
+              style={{ fontFamily: family, fontWeight: w.v }}
+              onClick={() => update({ fontWeight: w.v })}
+            >
+              {w.label.replace(/ \d+$/, "")}
+            </button>
+          ))}
         </div>
-        <div>
-          <span className="label mb-1 block">Weight</span>
-          <select
-            className="field"
-            aria-label="Font weight"
-            value={weight}
-            onChange={(e) => update({ fontWeight: e.target.value })}
-            style={{ fontFamily: family, fontWeight: weight }}
-          >
-            {WEIGHTS.map((w) => (
-              <option key={w.v} value={w.v}>
-                {w.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      </Row>
 
       <Slider
         label="Size"

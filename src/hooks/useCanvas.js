@@ -27,6 +27,14 @@ export default function useCanvas(elRef) {
     canvas.on("selection:created", () => store.syncSelection());
     canvas.on("selection:updated", () => store.syncSelection());
     canvas.on("selection:cleared", () => store.syncSelection());
+    canvas.on("mouse:down", (e) => {
+      if (e.target) return;
+      if (canvas.getActiveObject()) {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+        store.syncSelection();
+      }
+    });
 
     store.setCanvas(canvas);
 
@@ -50,6 +58,7 @@ export default function useCanvas(elRef) {
 
       if (autosave && autosave.json && (autosave.json.objects || []).length) {
         await store.restoreAutosave();
+        store.refreshFields();
       } else if (!designs.length) {
         loadTemplate("classicRound", { silent: true });
         store.toast(

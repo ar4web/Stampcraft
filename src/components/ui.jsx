@@ -11,10 +11,10 @@ export function Row({ label, hint, children, className = "" }) {
   return (
     <div className={`mb-2 min-w-0 ${className}`}>
       {label && (
-        <div className="mb-1 flex items-baseline justify-between gap-2">
+        <div className="mb-1.5 flex h-4 items-center justify-between gap-2">
           <span className="label">{label}</span>
           {hint && (
-            <span className="text-[10px] font-medium" style={{ color: "var(--text-dim)" }}>
+            <span className="shrink-0 text-[9px] font-medium" style={{ color: "var(--text-mute)" }}>
               {hint}
             </span>
           )}
@@ -22,6 +22,27 @@ export function Row({ label, hint, children, className = "" }) {
       )}
       {children}
     </div>
+  );
+}
+
+export function Fold({ title, hint, open = true, children }) {
+  const [on, setOn] = useState(open);
+  return (
+    <section className="fold">
+      <button
+        type="button"
+        className={`fold-head ${on ? "is-open" : ""}`}
+        aria-expanded={on}
+        onClick={() => setOn((v) => !v)}
+      >
+        <span className="label">{title}</span>
+        <span className="fold-meta">
+          {hint && <span className="fold-hint">{hint}</span>}
+          {on ? <ChevronUp size={12} aria-hidden /> : <ChevronDown size={12} aria-hidden />}
+        </span>
+      </button>
+      {on && <div className="fold-body">{children}</div>}
+    </section>
   );
 }
 

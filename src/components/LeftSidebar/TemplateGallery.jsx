@@ -135,7 +135,7 @@ export function TemplateCard({ tpl, thumb, onClick, large }) {
 export default function TemplateGallery() {
   const thumbs = useTemplateThumbs();
 
-  // Grouped sections: Round (single/double/triple ring) -> Square -> Oval -> Logo
+  // Grouped sections: Round -> Square -> Oval -> Logo -> Arabic
   return (
     <div className="space-y-3">
       {TEMPLATE_CATEGORIES.map((cat) => {

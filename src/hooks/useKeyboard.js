@@ -48,7 +48,8 @@ export default function useKeyboard() {
             return;
           case "s":
             e.preventDefault();
-            store.saveCurrent();
+            if (e.shiftKey) store.exportStampFile();
+            else store.saveCurrent();
             return;
           case "e":
             e.preventDefault();

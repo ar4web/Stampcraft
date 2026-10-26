@@ -18,9 +18,10 @@ import {
   Trash2,
   Type,
   Upload,
+  Building2,
 } from "lucide-react";
 import useStampStore from "../store/useStampStore";
-import { addImageFromFile, applyStampFilter } from "../utils/canvas";
+import { addImageFromFile, applyStampFilter, INK_COLORS } from "../utils/canvas";
 import { getCustomFonts, importFontFile, preloadDefaults, restoreCustomFonts } from "../utils/fonts";
 import { renameDesign, storageStatus } from "../utils/storage";
 import { Checkbox, Row, Slider } from "./ui";
@@ -48,6 +49,7 @@ const SHORTCUTS = [
   { key: "Delete", desc: "Delete selection" },
   { key: "Ctrl + S", desc: "Save design" },
   { key: "Ctrl + E", desc: "Export PNG" },
+  { key: "Ctrl + Shift + S", desc: "Export .stamp file" },
   { key: "Ctrl + N", desc: "Clear canvas" },
   { key: "Ctrl + A", desc: "Select all" },
   { key: "Ctrl + G / Shift + G", desc: "Group / Ungroup" },
@@ -125,6 +127,8 @@ export default function SettingsPanel() {
   const [draft, setDraft] = useState("");
   const fontRef = useRef(null);
   const importRef = useRef(null);
+  const logoRef = useRef(null);
+  const stampRef = useRef(null);
   const status = useMemo(() => storageStatus(), [st.designs, section]);
 
   const onFont = async (e) => {
@@ -151,6 +155,18 @@ export default function SettingsPanel() {
     } catch (e) {
       st.toast(`Import failed: ${e.message}`, "error");
     }
+  };
+
+  const onLogo = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      st.setCompany({ logo: reader.result });
+      st.toast("Company logo saved", "success");
+    };
+    reader.readAsDataURL(file);
   };
 
   const reloadFonts = async () => {
@@ -356,6 +372,79 @@ export default function SettingsPanel() {
 
         {section === "files" && (
           <>
+            <Card title="Company" hint="Preset">
+              <Row label="Name">
+                <input
+                  className="field"
+                  aria-label="Company name"
+                  value={st.company?.name || ""}
+                  onChange={(e) => st.setCompany({ name: e.target.value })}
+                  placeholder="Company name"
+                />
+              </Row>
+              <Row label="Legal line">
+                <input
+                  className="field"
+                  aria-label="Legal line"
+                  value={st.company?.legal || ""}
+                  onChange={(e) => st.setCompany({ legal: e.target.value })}
+                  placeholder="Reg. no. or address"
+                />
+              </Row>
+              <button type="button" className="btn w-full" onClick={() => logoRef.current?.click()}>
+                <Building2 size={13} aria-hidden /> {st.company?.logo ? "Replace logo" : "Save logo"}
+              </button>
+              <input
+                ref={logoRef}
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml"
+                className="hidden"
+                onChange={onLogo}
+              />
+              <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-mute)" }}>
+                Auto Design can fill these. Logo stays in this browser.
+              </p>
+            </Card>
+
+            <Card title="Ink sets" hint={`${st.palettes.length}`}>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {INK_COLORS.map((c) => (
+                  <button
+                    key={c.hex}
+                    type="button"
+                    title={c.name}
+                    aria-label={c.name}
+                    aria-pressed={(st.inkColor || "").toLowerCase() === c.hex.toLowerCase()}
+                    onClick={() => st.setInkColor(c.hex)}
+                    className="settings-swatch"
+                    style={{ background: c.hex }}
+                  />
+                ))}
+              </div>
+              <button type="button" className="btn w-full" onClick={() => st.savePalette("Ink set", [st.inkColor, ...INK_COLORS.map((c) => c.hex)].slice(0, 6))}>
+                Save current ink
+              </button>
+              {st.palettes.map((p) => (
+                <div key={p.id} className="flex items-center gap-2">
+                  <div className="flex flex-1 flex-wrap gap-1">
+                    {p.colors.map((hex) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        className="settings-swatch"
+                        style={{ background: hex }}
+                        aria-label={hex}
+                        onClick={() => st.setInkColor(hex)}
+                      />
+                    ))}
+                  </div>
+                  <button type="button" className="btn btn-icon btn-danger" aria-label="Remove ink set" onClick={() => st.removePalette(p.id)}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </Card>
+
             <Card title="Current stamp" hint={st.dirty ? "unsaved" : "saved"}>
               <Row label="Name">
                 <input
@@ -373,6 +462,25 @@ export default function SettingsPanel() {
                   Copy
                 </button>
               </div>
+              <div className="flex gap-1.5">
+                <button type="button" className="btn flex-1" onClick={() => st.exportStampFile()}>
+                  Export .stamp
+                </button>
+                <button type="button" className="btn flex-1" onClick={() => stampRef.current?.click()}>
+                  Import .stamp
+                </button>
+              </div>
+              <input
+                ref={stampRef}
+                type="file"
+                accept=".stamp,application/json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) await st.importStampFile(file);
+                }}
+              />
               <button type="button" className="btn w-full" onClick={() => importRef.current?.click()}>
                 <Upload size={14} aria-hidden /> Import image
               </button>

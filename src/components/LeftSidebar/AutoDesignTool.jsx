@@ -16,9 +16,10 @@ export default function AutoDesignTool() {
   const toast = useStampStore((s) => s.toast);
 
   const [busy, setBusy] = useState(false);
-  const [genName, setGenName] = useState("");
+  const company = useStampStore((s) => s.company);
+  const [genName, setGenName] = useState(company?.name || "");
   const [genCenter, setGenCenter] = useState("");
-  const [genBottom, setGenBottom] = useState("");
+  const [genBottom, setGenBottom] = useState(company?.legal || "");
   const [genShape, setGenShape] = useState("round");
 
   const sample = genName || genCenter || genBottom;
@@ -32,13 +33,14 @@ export default function AutoDesignTool() {
     }
     setBusy(true);
     await loadFont(font);
-    generateAutoStamp({
+    await generateAutoStamp({
       name: genName,
       center: genCenter,
       bottom: genBottom,
       shape: genShape,
       ink: inkColor,
       font,
+      logo: company?.logo,
     });
     setBusy(false);
   };
@@ -54,6 +56,19 @@ export default function AutoDesignTool() {
           Type in any language. A complete balanced stamp is generated and stays fully editable.
         </p>
       </div>
+
+      {company?.name ? (
+        <button
+          type="button"
+          className="btn w-full text-[10px]"
+          onClick={() => {
+            setGenName(company.name || "");
+            setGenBottom(company.legal || "");
+          }}
+        >
+          Use company preset
+        </button>
+      ) : null}
 
       <Row label="Company name">
         <input
